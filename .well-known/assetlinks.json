@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.foysalahmed00.twa",
+        "sha256_cert_fingerprints": ["16:82:86:1C:E0:33:4B:48:67:56:48:1C:87:79:84:17:35:EE:70:42:7D:11:07:D7:34:9F:95:45:36:BD:7B:9C"]
+      }
+    }]
