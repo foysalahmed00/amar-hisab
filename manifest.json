@@ -1,0 +1,20 @@
+{
+  "name": "Amar Hisab",
+  "short_name": "Amar Hisab",
+  "id": "com.mysterytech.amarhisab",
+  "start_url": "/amar-hisab/",
+  "scope": "/amar-hisab/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "description": "Personal & Business Accounting app with daily income-expense ledger, savings vault, bazar & salary tracker, multi-business accounts, and cloud backup.",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
