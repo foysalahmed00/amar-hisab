@@ -537,7 +537,7 @@
         <button class="mini" onclick="openAboutModal()"><i data-ic="shield" data-sz="sm"></i><span data-i18n="aboutBtn">অ্যাপ সম্পর্কে</span></button>
         <button class="mini" onclick="openTermsModal()"><i data-ic="briefcase" data-sz="sm"></i><span data-i18n="termsBtn">শর্তাবলি ও গোপনীয়তা নীতি</span></button>
       </div>
-      <div><strong>আমার হিসাব | My Hisab (v1.0.0)</strong></div>
+      <div><strong>আমার হিসাব | My Hisab (v2.0.7)</strong></div>
       <div><strong>Developer: Foysal Ahmed</strong></div>
       <div>Contact: foyaalahamed121@gmail.com</div>
     </div>
@@ -567,7 +567,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -819,7 +819,7 @@
   if (firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('YOUR_')) {
     try {
       const app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
-      getRedirectResult(auth).catch(()=>{});
+      (window._fb = { auth, GoogleAuthProvider, signInWithPopup, signInWithCredential }, (window._fb = { auth, GoogleAuthProvider, signInWithPopup, signInWithCredential }, (window._fb = { auth, GoogleAuthProvider, signInWithPopup, signInWithCredential }, (window._fb = { auth, GoogleAuthProvider, signInWithPopup, signInWithCredential }, getRedirectResult(auth))))).catch(()=>{});
       onAuthStateChanged(auth, async u => {
         if (u && !u.emailVerified) {
           user = null;
@@ -1719,7 +1719,7 @@
       <div style="text-align:center;margin-bottom:10px;">
         <img src="${iconPreview}" alt="App Icon" style="width:68px;height:68px;border-radius:16px;box-shadow:0 6px 16px rgba(22,163,74,.25);" />
         <div style="font-weight:700;font-size:.95rem;margin-top:6px;">আমার হিসাব | My Hisab</div>
-        <div id="verTapTarget" style="font-size:.74rem;color:var(--mut);user-select:none;cursor:pointer;display:inline-block;padding:2px 8px;">সংস্করণ (Version): v1.0.0</div>
+        <div id="verTapTarget" style="font-size:.74rem;color:var(--mut);user-select:none;cursor:pointer;display:inline-block;padding:2px 8px;">সংস্করণ (Version): v2.0.7</div>
       </div>
       <p style="font-size:.79rem;line-height:1.55;color:var(--txt);margin-bottom:10px;">
         <strong>আমার হিসাব</strong> একটি আধুনিক অফলাইন ও ক্লাউড-সমর্থিত ব্যক্তিগত এবং ব্যবসায়িক হিসাবরক্ষণ অ্যাপ। এতে দৈনন্দিন আয়-ব্যয়, সঞ্চয়, বাজার, ক্যালকুলেটর, অনুষ্ঠান ফান্ড, ব্যবসার দেনা-পাওনা ও কর্মচারী বেতনের পূর্ণাঙ্গ হিসাব সহজে রাখা যায়।
@@ -1733,7 +1733,7 @@
       <div style="text-align:center;margin-bottom:10px;">
         <img src="${iconPreview}" alt="App Icon" style="width:68px;height:68px;border-radius:16px;box-shadow:0 6px 16px rgba(22,163,74,.25);" />
         <div style="font-weight:700;font-size:.95rem;margin-top:6px;">আমার হিসাব | My Hisab</div>
-        <div id="verTapTarget" style="font-size:.74rem;color:var(--mut);user-select:none;cursor:pointer;display:inline-block;padding:2px 8px;">Version: v1.0.0</div>
+        <div id="verTapTarget" style="font-size:.74rem;color:var(--mut);user-select:none;cursor:pointer;display:inline-block;padding:2px 8px;">Version: v2.0.7</div>
       </div>
       <p style="font-size:.79rem;line-height:1.55;color:var(--txt);margin-bottom:10px;">
         <strong>My Hisab (আমার হিসাব)</strong> is a fast, offline-first Personal & Business Accounting PWA designed for daily income/expense tracking, savings goals, bazar budgets, due ledgers, and staff payroll management.
@@ -1792,5 +1792,397 @@
   setLang(lang);
   go(curTab);
 </script>
-</body>
+<style>
+* { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
+input, textarea, [contenteditable="true"] { -webkit-user-select: text !important; user-select: text !important; }
+div[role="dialog"] button, .modal button, [class*="modal"] button { display: inline-flex !important; visibility: visible !important; opacity: 1 !important; }
+</style>
+<script>
+(function() {
+  const origURL = URL.createObjectURL, blobs = {};
+  URL.createObjectURL = function(o) { const u = origURL.call(this, o); if (o instanceof Blob) blobs[u] = o; return u; };
+  const origClick = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function() {
+    if (this.href && this.href.startsWith("blob:") && window.AndroidBridge && blobs[this.href]) {
+      const f = this.download || ("AmarHisab_Backup_" + Date.now() + ".json");
+      const r = new FileReader();
+      r.onloadend = () => window.AndroidBridge.saveBase64File(r.result, f);
+      r.readAsDataURL(blobs[this.href]);
+      return;
+    }
+    return origClick.apply(this, arguments);
+  };
+})();
+function applyAvatar() {
+  const s = localStorage.getItem("amarHisab_customAvatar");
+  if (!s) return;
+  document.querySelectorAll(".avatar-wrap, #topAvatar, .profile-avatar").forEach(el => {
+    if (el.tagName === "IMG") el.src = s;
+    else el.innerHTML = `<img src="${s}" style="width:100%;height:100%;object-fit:cover;border-radius:9999px;">`;
+  });
+}
+window.onNativeImagePicked = function(dataUrl) {
+  localStorage.setItem("amarHisab_customAvatar", dataUrl);
+  try {
+    const bin = atob(dataUrl.split(",")[1]), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], "avatar.jpg", { type: "image/jpeg" }));
+    const inp = document.getElementById("picInput");
+    if (inp) { inp.files = dt.files; inp.dispatchEvent(new Event("change", { bubbles: true })); }
+  } catch (e) {}
+  applyAvatar();
+};
+window.onNativeJsonPicked = function(b64) {
+  try {
+    const bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], "backup.json", { type: "application/json" }));
+    const inp = document.getElementById("impFile");
+    if (inp) { inp.files = dt.files; inp.dispatchEvent(new Event("change", { bubbles: true })); }
+  } catch (e) { alert("Import Error: " + e.message); }
+};
+if (location.search.includes("native_auth=1")) {
+  window.addEventListener("load", () => {
+    document.body.innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;gap:16px;'><h2>Amar Hisab Login</h2><button id='goBtn' style='padding:14px 28px;font-size:16px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-weight:bold;'>Continue with Google</button></div>";
+    document.getElementById("goBtn").onclick = async () => {
+      try {
+        const fb = window._fb;
+        const res = await fb.signInWithPopup(fb.auth, new fb.GoogleAuthProvider());
+        const cred = fb.GoogleAuthProvider.credentialFromResult(res);
+        const tok = cred ? cred.idToken : "";
+        if (tok) location.href = "amarhisab://auth?token=" + encodeURIComponent(tok);
+      } catch (e) { alert("Login Error: " + e.message); }
+    };
+  });
+}
+window.onNativeGoogleToken = async function(idToken) {
+  try {
+    const fb = window._fb;
+    if (!fb) return;
+    const cred = fb.GoogleAuthProvider.credential(idToken);
+    await fb.signInWithCredential(fb.auth, cred);
+    location.reload();
+  } catch (e) { alert("Sign-in Error: " + e.message); }
+};
+document.addEventListener("click", function(e) {
+  if (!window.AndroidBridge) return;
+  const t = e.target, btn = t.closest("button");
+  if (btn && (btn.textContent || "").includes("Sign in with Google")) {
+    e.preventDefault(); e.stopImmediatePropagation(); window.AndroidBridge.startGoogleLogin(); return;
+  }
+  if (t.closest(".avatar-wrap") || t.closest("[title='Change Photo']") || (btn && (btn.textContent || "").includes("Change Photo"))) {
+    e.preventDefault(); e.stopImmediatePropagation(); window.AndroidBridge.openImagePicker(); return;
+  }
+  if (btn && ((btn.getAttribute("onclick") || "").includes("impFile") || ["Import", "ইম্পোর্ট"].includes((btn.textContent || "").trim()))) {
+    e.preventDefault(); e.stopImmediatePropagation(); window.AndroidBridge.openJsonPicker(); return;
+  }
+  setTimeout(applyAvatar, 200);
+}, true);
+window.addEventListener("DOMContentLoaded", () => setTimeout(applyAvatar, 300));
+</script><style>
+* { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
+input, textarea, [contenteditable="true"] { -webkit-user-select: text !important; user-select: text !important; }
+div[role="dialog"] button, .modal button, [class*="modal"] button { display: inline-flex !important; visibility: visible !important; opacity: 1 !important; }
+</style>
+<script>
+(function() {
+  const origURL = URL.createObjectURL, blobs = {};
+  URL.createObjectURL = function(o) { const u = origURL.call(this, o); if (o instanceof Blob) blobs[u] = o; return u; };
+  const origClick = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function() {
+    if (this.href && this.href.startsWith("blob:") && window.AndroidBridge && blobs[this.href]) {
+      const f = this.download || ("AmarHisab_Backup_" + Date.now() + ".json");
+      const r = new FileReader();
+      r.onloadend = () => window.AndroidBridge.saveBase64File(r.result, f);
+      r.readAsDataURL(blobs[this.href]);
+      return;
+    }
+    return origClick.apply(this, arguments);
+  };
+})();
+function applyAvatar() {
+  const s = localStorage.getItem("amarHisab_customAvatar");
+  if (!s) return;
+  document.querySelectorAll(".avatar-wrap, #topAvatar, .profile-avatar").forEach(el => {
+    if (el.tagName === "IMG") el.src = s;
+    else el.innerHTML = `<img src="${s}" style="width:100%;height:100%;object-fit:cover;border-radius:9999px;">`;
+  });
+}
+window.onNativeImagePicked = function(dataUrl) {
+  localStorage.setItem("amarHisab_customAvatar", dataUrl);
+  try {
+    const bin = atob(dataUrl.split(",")[1]), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], "avatar.jpg", { type: "image/jpeg" }));
+    const inp = document.getElementById("picInput");
+    if (inp) { inp.files = dt.files; inp.dispatchEvent(new Event("change", { bubbles: true })); }
+  } catch (e) {}
+  applyAvatar();
+};
+window.onNativeJsonPicked = function(b64) {
+  try {
+    const bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], "backup.json", { type: "application/json" }));
+    const inp = document.getElementById("impFile");
+    if (inp) { inp.files = dt.files; inp.dispatchEvent(new Event("change", { bubbles: true })); }
+  } catch (e) { alert("Import Error: " + e.message); }
+};
+if (location.search.includes("native_auth=1")) {
+  window.addEventListener("load", () => {
+    document.body.innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;gap:16px;'><h2>Amar Hisab Login</h2><button id='goBtn' style='padding:14px 28px;font-size:16px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-weight:bold;'>Continue with Google</button></div>";
+    document.getElementById("goBtn").onclick = async () => {
+      try {
+        const fb = window._fb;
+        const res = await fb.signInWithPopup(fb.auth, new fb.GoogleAuthProvider());
+        const cred = fb.GoogleAuthProvider.credentialFromResult(res);
+        const tok = cred ? cred.idToken : "";
+        if (tok) location.href = "amarhisab://auth?token=" + encodeURIComponent(tok);
+      } catch (e) { alert("Login Error: " + e.message); }
+    };
+  });
+}
+window.onNativeGoogleToken = function(idToken) {
+  if (!idToken) return;
+  localStorage.setItem("pending_gtoken", idToken);
+  processPendingToken();
+};
+function processPendingToken() {
+  const tok = localStorage.getItem("pending_gtoken");
+  if (!tok) return;
+  const t = setInterval(async () => {
+    const fb = window._fb;
+    if (!fb) return;
+    clearInterval(t);
+    localStorage.removeItem("pending_gtoken");
+    try {
+      const cred = fb.GoogleAuthProvider.credential(tok);
+      await fb.signInWithCredential(fb.auth, cred);
+      location.reload();
+    } catch (e) { alert("Sign-in Error: " + e.message); }
+  }, 200);
+}
+window.addEventListener("DOMContentLoaded", processPendingToken);
+document.addEventListener("click", function(e) {
+  if (!window.AndroidBridge) return;
+  const t = e.target, btn = t.closest("button");
+  if (btn && (btn.textContent || "").includes("Sign in with Google")) {
+    e.preventDefault(); e.stopImmediatePropagation(); window.AndroidBridge.startGoogleLogin(); return;
+  }
+  if (t.closest(".avatar-wrap") || t.closest("[title='Change Photo']") || (btn && (btn.textContent || "").includes("Change Photo"))) {
+    e.preventDefault(); e.stopImmediatePropagation(); window.AndroidBridge.openImagePicker(); return;
+  }
+  if (btn && ((btn.getAttribute("onclick") || "").includes("impFile") || ["Import", "ইম্পোর্ট"].includes((btn.textContent || "").trim()))) {
+    e.preventDefault(); e.stopImmediatePropagation(); window.AndroidBridge.openJsonPicker(); return;
+  }
+  setTimeout(applyAvatar, 200);
+}, true);
+window.addEventListener("DOMContentLoaded", () => setTimeout(applyAvatar, 300));
+</script><style>
+* { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
+input, textarea, [contenteditable="true"] { -webkit-user-select: text !important; user-select: text !important; }
+div[role="dialog"] button, .modal button, [class*="modal"] button { display: inline-flex !important; visibility: visible !important; opacity: 1 !important; }
+</style>
+<script>
+(function() {
+  const origURL = URL.createObjectURL, blobs = {};
+  URL.createObjectURL = function(o) { const u = origURL.call(this, o); if (o instanceof Blob) blobs[u] = o; return u; };
+  const origClick = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function() {
+    if (this.href && this.href.startsWith("blob:") && window.AndroidBridge && blobs[this.href]) {
+      const f = this.download || ("AmarHisab_Backup_" + Date.now() + ".json");
+      const r = new FileReader();
+      r.onloadend = () => window.AndroidBridge.saveBase64File(r.result, f);
+      r.readAsDataURL(blobs[this.href]);
+      return;
+    }
+    return origClick.apply(this, arguments);
+  };
+})();
+function applyAvatar() {
+  const s = localStorage.getItem("amarHisab_customAvatar");
+  if (!s) return;
+  document.querySelectorAll(".avatar-wrap, #topAvatar, .profile-avatar").forEach(el => {
+    if (el.tagName === "IMG") el.src = s;
+    else el.innerHTML = `<img src="${s}" style="width:100%;height:100%;object-fit:cover;border-radius:9999px;">`;
+  });
+}
+window.onNativeImagePicked = function(dataUrl) {
+  localStorage.setItem("amarHisab_customAvatar", dataUrl);
+  try {
+    const bin = atob(dataUrl.split(",")[1]), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], "avatar.jpg", { type: "image/jpeg" }));
+    const inp = document.getElementById("picInput");
+    if (inp) { inp.files = dt.files; inp.dispatchEvent(new Event("change", { bubbles: true })); }
+  } catch (e) {}
+  applyAvatar();
+};
+window.onNativeJsonPicked = function(b64) {
+  try {
+    const bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], "backup.json", { type: "application/json" }));
+    const inp = document.getElementById("impFile");
+    if (inp) { inp.files = dt.files; inp.dispatchEvent(new Event("change", { bubbles: true })); }
+  } catch (e) { alert("Import Error: " + e.message); }
+};
+if (location.search.includes("native_auth=1")) {
+  window.addEventListener("load", () => {
+    document.body.innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;gap:16px;'><h2>Amar Hisab Login</h2><button id='goBtn' style='padding:14px 28px;font-size:16px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-weight:bold;'>Continue with Google</button></div>";
+    document.getElementById("goBtn").onclick = async () => {
+      try {
+        const fb = window._fb;
+        const res = await fb.signInWithPopup(fb.auth, new fb.GoogleAuthProvider());
+        const cred = fb.GoogleAuthProvider.credentialFromResult(res);
+        const tok = cred ? cred.idToken : "";
+        if (tok) location.href = "amarhisab://auth?token=" + encodeURIComponent(tok);
+      } catch (e) { alert("Login Error: " + e.message); }
+    };
+  });
+}
+window.onNativeGoogleToken = function(idToken) {
+  if (!idToken) return;
+  localStorage.setItem("pending_gtoken", idToken);
+  processPendingToken();
+};
+function processPendingToken() {
+  const tok = localStorage.getItem("pending_gtoken");
+  if (!tok) return;
+  const t = setInterval(async () => {
+    const fb = window._fb;
+    if (!fb) return;
+    clearInterval(t);
+    localStorage.removeItem("pending_gtoken");
+    try {
+      const cred = fb.GoogleAuthProvider.credential(tok);
+      await fb.signInWithCredential(fb.auth, cred);
+      location.reload();
+    } catch (e) { alert("Sign-in Error: " + e.message); }
+  }, 200);
+}
+window.addEventListener("DOMContentLoaded", processPendingToken);
+document.addEventListener("click", function(e) {
+  if (!window.AndroidBridge) return;
+  const t = e.target, btn = t.closest("button");
+  if (btn && (btn.textContent || "").includes("Sign in with Google")) {
+    e.preventDefault(); e.stopImmediatePropagation(); window.AndroidBridge.startGoogleLogin(); return;
+  }
+  if (t.closest(".avatar-wrap") || t.closest("[title='Change Photo']") || (btn && (btn.textContent || "").includes("Change Photo"))) {
+    e.preventDefault(); e.stopImmediatePropagation(); window.AndroidBridge.openImagePicker(); return;
+  }
+  if (btn && ((btn.getAttribute("onclick") || "").includes("impFile") || ["Import", "ইম্পোর্ট"].includes((btn.textContent || "").trim()))) {
+    e.preventDefault(); e.stopImmediatePropagation(); window.AndroidBridge.openJsonPicker(); return;
+  }
+  setTimeout(applyAvatar, 200);
+}, true);
+window.addEventListener("DOMContentLoaded", () => setTimeout(applyAvatar, 300));
+</script><style>
+* { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
+input, textarea, [contenteditable="true"] { -webkit-user-select: text !important; user-select: text !important; }
+div[role="dialog"] button, .modal button, [class*="modal"] button { display: inline-flex !important; visibility: visible !important; opacity: 1 !important; }
+</style>
+<script>
+(function() {
+  const origURL = URL.createObjectURL, blobs = {};
+  URL.createObjectURL = function(o) { const u = origURL.call(this, o); if (o instanceof Blob) blobs[u] = o; return u; };
+  const origClick = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function() {
+    if (this.href && this.href.startsWith("blob:") && window.AndroidBridge && blobs[this.href]) {
+      const f = this.download || ("AmarHisab_Backup_" + Date.now() + ".json");
+      const r = new FileReader();
+      r.onloadend = () => window.AndroidBridge.saveBase64File(r.result, f);
+      r.readAsDataURL(blobs[this.href]);
+      return;
+    }
+    return origClick.apply(this, arguments);
+  };
+})();
+function applyAvatar() {
+  const s = localStorage.getItem("amarHisab_customAvatar");
+  if (!s) return;
+  document.querySelectorAll(".avatar-wrap, #topAvatar, .profile-avatar").forEach(el => {
+    if (el.tagName === "IMG") el.src = s;
+    else el.innerHTML = `<img src="${s}" style="width:100%;height:100%;object-fit:cover;border-radius:9999px;">`;
+  });
+}
+window.onNativeImagePicked = function(dataUrl) {
+  localStorage.setItem("amarHisab_customAvatar", dataUrl);
+  try {
+    const bin = atob(dataUrl.split(",")[1]), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], "avatar.jpg", { type: "image/jpeg" }));
+    const inp = document.getElementById("picInput");
+    if (inp) { inp.files = dt.files; inp.dispatchEvent(new Event("change", { bubbles: true })); }
+  } catch (e) {}
+  applyAvatar();
+};
+window.onNativeJsonPicked = function(b64) {
+  try {
+    const bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], "backup.json", { type: "application/json" }));
+    const inp = document.getElementById("impFile");
+    if (inp) { inp.files = dt.files; inp.dispatchEvent(new Event("change", { bubbles: true })); }
+  } catch (e) { alert("Import Error: " + e.message); }
+};
+if (location.search.includes("native_auth=1")) {
+  window.addEventListener("load", () => {
+    document.body.innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;gap:16px;'><h2>Amar Hisab Login</h2><button id='goBtn' style='padding:14px 28px;font-size:16px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-weight:bold;'>Continue with Google</button></div>";
+    document.getElementById("goBtn").onclick = async () => {
+      try {
+        const fb = window._fb;
+        const res = await fb.signInWithPopup(fb.auth, new fb.GoogleAuthProvider());
+        const cred = fb.GoogleAuthProvider.credentialFromResult(res);
+        const tok = cred ? cred.idToken : "";
+        if (tok) location.href = "amarhisab://auth?token=" + encodeURIComponent(tok);
+      } catch (e) { alert("Login Error: " + e.message); }
+    };
+  });
+}
+window.onNativeGoogleToken = function(idToken) {
+  if (!idToken) return;
+  localStorage.setItem("pending_gtoken", idToken);
+  processPendingToken();
+};
+function processPendingToken() {
+  const tok = localStorage.getItem("pending_gtoken");
+  if (!tok) return;
+  const t = setInterval(async () => {
+    const fb = window._fb;
+    if (!fb) return;
+    clearInterval(t);
+    localStorage.removeItem("pending_gtoken");
+    try {
+      const cred = fb.GoogleAuthProvider.credential(tok);
+      await fb.signInWithCredential(fb.auth, cred);
+      location.reload();
+    } catch (e) { alert("Sign-in Error: " + e.message); }
+  }, 200);
+}
+window.addEventListener("DOMContentLoaded", processPendingToken);
+document.addEventListener("click", function(e) {
+  if (!window.AndroidBridge) return;
+  const t = e.target, btn = t.closest("button");
+  if (btn && ((btn.textContent || "").includes("Sign in with Google") || (btn.textContent || "").includes("Google দিয়ে লগইন করুন"))) {
+    e.preventDefault(); e.stopImmediatePropagation(); window.AndroidBridge.startGoogleLogin(); return;
+  }
+  if (t.closest(".avatar-wrap") || t.closest("[title='Change Photo']") || (btn && (btn.textContent || "").includes("Change Photo"))) {
+    e.preventDefault(); e.stopImmediatePropagation(); window.AndroidBridge.openImagePicker(); return;
+  }
+  if (btn && ((btn.getAttribute("onclick") || "").includes("impFile") || ["Import", "ইম্পোর্ট"].includes((btn.textContent || "").trim()))) {
+    e.preventDefault(); e.stopImmediatePropagation(); window.AndroidBridge.openJsonPicker(); return;
+  }
+  setTimeout(applyAvatar, 200);
+}, true);
+window.addEventListener("DOMContentLoaded", () => setTimeout(applyAvatar, 300));
+</script></body>
 </html>
