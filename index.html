@@ -32,6 +32,10 @@
     .w-btn { width:100%; padding:12px; border-radius:12px; font-size:.88rem; font-weight:600; cursor:pointer; border:none; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px; }
     .w-g { background:var(--pri); color:#fff; }
     .w-gst { background:var(--sub); color:var(--txt); }
+    .w-div { display:flex; align-items:center; gap:8px; margin:12px 0; color:var(--mut); font-size:.73rem; }
+    .w-div::before, .w-div::after { content:''; flex:1; height:1px; background:var(--bdr); }
+    .w-link { background:none; border:none; color:var(--pri); font-size:.75rem; font-weight:600; cursor:pointer; padding:4px 0; }
+    .auth-err { background:var(--red-s); color:var(--red); font-size:.74rem; font-weight:600; padding:7px 10px; border-radius:9px; margin-bottom:9px; display:none; text-align:left; }
 
     /* Sticky Header & Dynamic Mode Tab Bar */
     .top-wrap { position:sticky; top:0; z-index:60; background:var(--card); border-bottom:1px solid var(--bdr); }
@@ -146,9 +150,18 @@
   <div class="w-card">
     <div class="w-logo" data-ic="wallet" data-sz="lg"></div>
     <h1 data-i18n="appTitle">আমার হিসাব</h1>
-    <p data-i18n="wSub">ব্যক্তিগত ও ব্যবসার সহজ অফলাইন এবং ক্লাউড হিসাব খাতা</p>
+    <p data-i18n="wSub" style="margin-bottom:14px;">ব্যক্তিগত ও ব্যবসার সহজ অফলাইন এবং ক্লাউড হিসাব খাতা</p>
+    <div id="wErr" class="auth-err"></div>
+    <div class="fg" style="text-align:left;"><input type="email" id="wEmail" data-i18n-ph="phEmail" placeholder="ইমেইল ঠিকানা (Email)" /></div>
+    <div class="fg" style="text-align:left;margin-bottom:4px;"><input type="password" id="wPass" data-i18n-ph="phPass" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" /></div>
+    <div style="text-align:right;margin-bottom:10px;"><button class="w-link" onclick="resetPass('wEmail','wErr')" data-i18n="forgotPass">পাসওয়ার্ড ভুলে গেছেন?</button></div>
+    <div class="row2" style="margin-bottom:0;">
+      <button class="w-btn w-g" onclick="emailAuth('login','wEmail','wPass','wErr')" data-i18n="emailLogin">লগইন করুন</button>
+      <button class="w-btn w-gst" onclick="emailAuth('signup','wEmail','wPass','wErr')" data-i18n="emailSignup">নতুন অ্যাকাউন্ট</button>
+    </div>
+    <div class="w-div"><span data-i18n="orTxt">অথবা</span></div>
     <button class="w-btn w-g" onclick="googleLogin()"><span data-ic="shield"></span><span data-i18n="loginG">Google দিয়ে লগইন করুন</span></button>
-    <button class="w-btn w-gst" onclick="enterGuest()"><span data-ic="user"></span><span data-i18n="guestBtn">গেস্ট মোডে চালান</span></button>
+    <button class="w-btn w-gst" style="margin-bottom:0;" onclick="enterGuest()"><span data-ic="user"></span><span data-i18n="guestBtn">গেস্ট মোডে চালান</span></button>
   </div>
 </div>
 
@@ -542,7 +555,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -600,6 +613,11 @@
     bn: {
       appTitle:"আমার হিসাব", wSub:"ব্যক্তিগত ও ব্যবসার সহজ অফলাইন এবং ক্লাউড হিসাব খাতা",
       loginG:"Google দিয়ে লগইন করুন", guestBtn:"গেস্ট মোডে চালান",
+      phEmail:"ইমেইল ঠিকানা (Email)", phPass:"পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)", forgotPass:"পাসওয়ার্ড ভুলে গেছেন?",
+      emailLogin:"লগইন করুন", emailSignup:"নতুন অ্যাকাউন্ট", orTxt:"অথবা",
+      resetSent:"পাসওয়ার্ড রিসেট লিংক ইমেইলে পাঠানো হয়েছে", enterEmail:"সঠিক ইমেইল ঠিকানা লিখুন",
+      errInvalidEmail:"ইমেইল ঠিকানাটি সঠিক নয়", errWrongPass:"ইমেইল বা পাসওয়ার্ড ভুল হয়েছে",
+      errEmailUsed:"এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে", errWeakPass:"পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে",
       pDaily:"জমা ও খরচ", pSav:"সঞ্চয়", pMkt:"বাজার", pCalc:"ক্যালকুলেটর", pEv:"অনুষ্ঠান",
       bDaily:"দৈনিক হিসাব", bDue:"দেনা-পাওনা", bSav:"সেভিংস", bStaff:"কর্মচারী হিসাব",
       inc:"জমা / আয়", exp:"খরচ / ব্যয়", rem:"অবশিষ্ট", type:"ধরন", amt:"পরিমাণ", note:"বিবরণ", date:"তারিখ", save:"সেভ করুন",
@@ -621,7 +639,7 @@
       payDaily:"দৈনিক মজুরি", payWeekly:"সাপ্তাহিক বেতন", payMonthly:"মাসিক বেতন", dueLbl:"বাকি:", paidLbl:"পরিশোধ:",
       back:"ফিরে যান", chgPic:"ছবি পরিবর্তন", multiAcc:"অ্যাকাউন্ট নির্বাচন", newBizAcc:"নতুন ব্যবসা", personalAcc:"ব্যক্তিগত অ্যাকাউন্ট",
       langLbl:"ভাষা (Language)", thLbl:"থিম (Theme)", light:"লাইট", dark:"ডার্ক", system:"সিস্টেম",
-      bkpLbl:"ব্যাকআপ ও অ্যাকাউন্ট", expBtn:"এক্সপোর্ট", impBtn:"ইম্পোর্ট", gLoginShort:"Google লগইন", logout:"লগআউট",
+      bkpLbl:"ব্যাকআপ ও অ্যাকাউন্ট", expBtn:"এক্সপোর্ট", impBtn:"ইম্পোর্ট", gLoginShort:"লগইন / সিঙ্ক", logout:"লগআউট",
       cancel:"বাতিল", confirm:"নিশ্চিত", offline:"অফলাইন (গেস্ট)", synced:"ক্লাউড সিঙ্ক সক্রিয়", syncing:"সিঙ্ক হচ্ছে...", noData:"কোনো হিসাব পাওয়া যায়নি",
       quickEntry:"নতুন হিসাব লিখুন", addEvTab:"অনুষ্ঠান ট্যাব যোগ করুন", remEvTab:"অনুষ্ঠান ট্যাব লুকান",
       newBizTitle:"নতুন ব্যবসায়িক অ্যাকাউন্টের নাম", newEvTitle:"নতুন অনুষ্ঠানের নাম", editNameTitle:"আপনার নাম লিখুন",
@@ -630,6 +648,11 @@
     en: {
       appTitle:"My Hisab", wSub:"Simple offline & cloud personal and business ledger",
       loginG:"Sign in with Google", guestBtn:"Continue as Guest",
+      phEmail:"Email Address", phPass:"Password (min 6 characters)", forgotPass:"Forgot Password?",
+      emailLogin:"Sign In", emailSignup:"Create Account", orTxt:"OR",
+      resetSent:"Password reset link sent to your email", enterEmail:"Please enter a valid email address",
+      errInvalidEmail:"Invalid email address format", errWrongPass:"Incorrect email or password",
+      errEmailUsed:"This email is already registered", errWeakPass:"Password must be at least 6 characters",
       pDaily:"Income/Exp", pSav:"Savings", pMkt:"Bazar", pCalc:"Calculator", pEv:"Events",
       bDaily:"Daily Ledger", bDue:"Due Ledger", bSav:"Savings", bStaff:"Staff",
       inc:"Income", exp:"Expense", rem:"Balance", type:"Type", amt:"Amount", note:"Note", date:"Date", save:"Save Entry",
@@ -651,7 +674,7 @@
       payDaily:"Daily Wage", payWeekly:"Weekly Salary", payMonthly:"Monthly Salary", dueLbl:"Due:", paidLbl:"Paid:",
       back:"Back", chgPic:"Change Photo", multiAcc:"Switch Account", newBizAcc:"New Business", personalAcc:"Personal Account",
       langLbl:"Language", thLbl:"Theme", light:"Light", dark:"Dark", system:"System",
-      bkpLbl:"Backup & Account", expBtn:"Export", impBtn:"Import", gLoginShort:"Google Login", logout:"Logout",
+      bkpLbl:"Backup & Account", expBtn:"Export", impBtn:"Import", gLoginShort:"Login / Sync", logout:"Logout",
       cancel:"Cancel", confirm:"Confirm", offline:"Offline (Guest)", synced:"Cloud Synced", syncing:"Syncing...", noData:"No entries yet",
       quickEntry:"Quick Entry", addEvTab:"Show Events Tab", remEvTab:"Hide Events Tab",
       newBizTitle:"New Business Account Name", newEvTitle:"New Event Name", editNameTitle:"Enter Your Name",
@@ -755,7 +778,7 @@
       onAuthStateChanged(auth, async u => {
         user = u;
         if (u) {
-          localStorage.setItem(K.sess, 'google'); $('welcome').style.display = 'none';
+          localStorage.setItem(K.sess, 'cloud'); $('welcome').style.display = 'none';
           const gst = JSON.parse(localStorage.getItem(K.guest));
           const hasG = gst && ((gst.daily?.length||0)+(gst.savings?.length||0)+(gst.bazar?.length||0)+(gst.bizDaily?.length||0) > 0);
           try {
@@ -773,6 +796,65 @@
       });
     } catch {}
   }
+
+  function authErrMsg(code) {
+    if (code === 'auth/invalid-email') return t('errInvalidEmail');
+    if (code === 'auth/email-already-in-use') return t('errEmailUsed');
+    if (code === 'auth/weak-password') return t('errWeakPass');
+    if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') return t('errWrongPass');
+    return code || 'Authentication Error';
+  }
+  function showAuthErr(errId, msg) {
+    const el = $(errId);
+    if (el) { el.innerText = msg; el.style.display = msg ? 'block' : 'none'; }
+    else if (msg) toast(msg);
+  }
+
+  window.emailAuth = async (mode, emId, pwId, errId) => {
+    if (!auth) return toast(lang==='bn'?'Firebase Config যুক্ত করুন':'Add Firebase Config');
+    const em = $(emId).value.trim(), pw = $(pwId).value;
+    showAuthErr(errId, '');
+    if (!em || !em.includes('@')) return showAuthErr(errId, t('errInvalidEmail'));
+    if (!pw || pw.length < 6) return showAuthErr(errId, t('errWeakPass'));
+    try {
+      if (mode === 'signup') await createUserWithEmailAndPassword(auth, em, pw);
+      else await signInWithEmailAndPassword(auth, em, pw);
+      $('dlgModal').style.display = 'none';
+    } catch (e) {
+      showAuthErr(errId, authErrMsg(e.code));
+    }
+  };
+
+  window.resetPass = async (emId, errId) => {
+    if (!auth) return;
+    const em = $(emId).value.trim();
+    showAuthErr(errId, '');
+    if (!em || !em.includes('@')) return showAuthErr(errId, t('enterEmail'));
+    try {
+      await sendPasswordResetEmail(auth, em);
+      toast(t('resetSent'));
+    } catch (e) {
+      showAuthErr(errId, authErrMsg(e.code));
+    }
+  };
+
+  window.openAuthModal = () => {
+    $('dlgT').innerText = t('gLoginShort');
+    $('dlgBody').innerHTML = `
+      <div id="mAuthErr" class="auth-err"></div>
+      <div class="fg"><input type="email" id="mEmail" placeholder="${t('phEmail')}" /></div>
+      <div class="fg" style="margin-bottom:4px;"><input type="password" id="mPass" placeholder="${t('phPass')}" /></div>
+      <div style="text-align:right;margin-bottom:10px;"><button class="w-link" onclick="resetPass('mEmail','mAuthErr')">${t('forgotPass')}</button></div>
+      <div class="row2">
+        <button class="btn" onclick="emailAuth('login','mEmail','mPass','mAuthErr')">${t('emailLogin')}</button>
+        <button class="btn btn-sub" onclick="emailAuth('signup','mEmail','mPass','mAuthErr')">${t('emailSignup')}</button>
+      </div>
+      <div class="w-div"><span>${t('orTxt')}</span></div>
+      <button class="btn btn-g" onclick="$('dlgModal').style.display='none';googleLogin()">${svg('shield','sm')}<span>${t('loginG')}</span></button>`;
+    $('dlgYes').style.display = 'none';
+    $('dlgNo').onclick = () => { $('dlgYes').style.display = 'inline-flex'; $('dlgModal').style.display = 'none'; };
+    $('dlgModal').style.display = 'flex';
+  };
 
   window.googleLogin = async () => {
     if (!auth) return toast(lang==='bn'?'Firebase Config যুক্ত করুন':'Add Firebase Config');
@@ -1419,7 +1501,7 @@
     if (selectedEmpId) renderEmpDetail();
 
     // Profile & Header Avatar
-    const pName = user?.displayName || data.profile?.name || (lang==='bn'?'গেস্ট ব্যবহারকারী':'Guest User');
+    const pName = user?.displayName || (user?.email ? user.email.split('@')[0] : '') || data.profile?.name || (lang==='bn'?'গেস্ট ব্যবহারকারী':'Guest User');
     $('profName').innerText = pName;
     $('profEmail').innerText = user ? user.email : t('offline');
     const pic = data.profile?.photo || user?.photoURL;
@@ -1433,7 +1515,7 @@
 
     const authBtn = $('authActionBtn');
     if (user) { authBtn.innerHTML = `${svg('arrowLeft','sm')}<span>${t('logout')}</span>`; authBtn.style.color='var(--red)'; authBtn.onclick=googleLogout; }
-    else { authBtn.innerHTML = `${svg('shield','sm')}<span>${t('gLoginShort')}</span>`; authBtn.style.color='var(--pri)'; authBtn.onclick=googleLogin; }
+    else { authBtn.innerHTML = `${svg('shield','sm')}<span>${t('gLoginShort')}</span>`; authBtn.style.color='var(--pri)'; authBtn.onclick=openAuthModal; }
 
     // Account Switcher List
     $('accList').innerHTML = `
