@@ -6,7 +6,8 @@
   <meta name="theme-color" content="#16a34a" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <link id="pwaManifest" rel="manifest" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icon-512.png" />
   <title>আমার হিসাব | My Hisab</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <style>
@@ -1781,35 +1782,10 @@
     showInfoModal(t('termsBtn'), html);
   };
 
-  // Inject PWA Web App Manifest & Register Service Worker (./sw.js)
-  (function initPWA() {
-    try {
-      const icon192 = buildAppIconDataUrl(192);
-      const icon512 = buildAppIconDataUrl(512);
-      const manifest = {
-        name: "আমার হিসাব | My Hisab",
-        short_name: "আমার হিসাব",
-        description: "Personal & Business Offline & Cloud Accounting App",
-        start_url: "./",
-        scope: "./",
-        display: "standalone",
-        orientation: "portrait",
-        theme_color: "#16a34a",
-        background_color: "#f4f6fa",
-        icons: [
-          { src: icon192, sizes: "192x192", type: "image/png", purpose: "any maskable" },
-          { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
-        ]
-      };
-      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-      const link = $('pwaManifest');
-      if (link) link.href = URL.createObjectURL(blob);
-
-      if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-      }
-    } catch {}
-  })();
+  // Register Service Worker (./sw.js)
+  if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
 
   hydrateIcons();
   setTheme(theme);
