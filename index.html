@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>আমার হিসাব | My Hisab</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:#f4f6fa; --card:#ffffff; --sub:#eef2f7; --pri:#2563eb; --pri-s:#eff6ff;
+      --grn:#16a34a; --grn-s:#dcfce7; --red:#dc2626; --red-s:#fee2e2;
+      --amb:#d97706; --amb-s:#fef3c7; --txt:#0f172a; --mut:#64748b; --bdr:#e2e8f0;
+    }
+    body.dark {
+      --bg:#0b1120; --card:#131c31; --sub:#1e293b; --pri:#3b82f6; --pri-s:#172554;
+      --grn:#22c55e; --grn-s:rgba(34,197,94,.16); --red:#ef4444; --red-s:rgba(239,68,68,.16);
+      --amb:#f59e0b; --amb-s:rgba(245,158,11,.16); --txt:#f8fafc; --mut:#94a3b8; --bdr:#243044;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-tap-highlight-color:transparent; }
+    body { background:var(--bg); color:var(--txt); min-height:100vh; padding-bottom:84px; }
+    svg.ic { width:18px; height:18px; stroke:currentColor; stroke-width:1.8; fill:none; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+    svg.ic-sm { width:14px; height:14px; }
+    svg.ic-lg { width:26px; height:26px; }
+
+    /* Welcome Screen */
+    #welcome { position:fixed; inset:0; background:var(--bg); z-index:300; display:flex; align-items:center; justify-content:center; padding:20px; }
+    .w-card { background:var(--card); border:1px solid var(--bdr); border-radius:22px; padding:30px 22px; width:100%; max-width:360px; text-align:center; box-shadow:0 14px 34px rgba(0,0,0,.07); }
+    .w-logo { width:56px; height:56px; border-radius:16px; background:var(--pri-s); color:var(--pri); display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; }
+    .w-card h1 { font-size:1.4rem; margin-bottom:6px; letter-spacing:-.01em; }
+    .w-card p { color:var(--mut); font-size:.83rem; margin-bottom:22px; line-height:1.45; }
+    .w-btn { width:100%; padding:12px; border-radius:12px; font-size:.88rem; font-weight:600; cursor:pointer; border:none; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px; }
+    .w-g { background:var(--pri); color:#fff; }
+    .w-gst { background:var(--sub); color:var(--txt); }
+
+    /* Sticky Header & Dynamic Mode Tab Bar */
+    .top-wrap { position:sticky; top:0; z-index:60; background:var(--card); border-bottom:1px solid var(--bdr); }
+    header { padding:10px 14px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .brand { display:flex; align-items:center; gap:8px; min-width:0; }
+    .brand-ic { width:32px; height:32px; border-radius:9px; background:var(--pri-s); color:var(--pri); display:grid; place-items:center; flex-shrink:0; }
+    .brand h2 { font-size:1rem; font-weight:700; letter-spacing:-.01em; }
+    .acc-pill { display:inline-flex; align-items:center; gap:4px; font-size:.69rem; background:var(--pri-s); color:var(--pri); padding:4px 9px; border-radius:999px; font-weight:600; border:none; cursor:pointer; max-width:135px; }
+    .acc-pill span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .h-acts { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+    .icon-btn { width:34px; height:34px; border-radius:10px; border:1px solid var(--bdr); background:var(--bg); color:var(--txt); display:grid; place-items:center; cursor:pointer; }
+    .av-btn { position:relative; width:36px; height:36px; border-radius:50%; border:1.5px solid var(--pri); background:var(--pri-s); color:var(--pri); display:grid; place-items:center; cursor:pointer; overflow:visible; padding:0; }
+    .av-btn img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+    .sync-dot { position:absolute; right:-1px; bottom:-1px; width:10px; height:10px; border-radius:50%; background:var(--amb); border:2px solid var(--card); }
+    .sync-dot.ok { background:var(--grn); }
+
+    .top-tabs { display:flex; padding:2px 6px 6px; gap:4px; overflow-x:auto; scrollbar-width:none; }
+    .top-tabs::-webkit-scrollbar { display:none; }
+    .t-btn { flex:1; min-width:66px; background:none; border:none; border-radius:10px; color:var(--mut); padding:6px 4px; display:flex; flex-direction:column; align-items:center; gap:3px; font-size:.66rem; font-weight:600; cursor:pointer; transition:.15s; }
+    .t-btn.active { background:var(--pri-s); color:var(--pri); }
+
+    /* Container & Fintech Cards */
+    .wrap { max-width:480px; margin:0 auto; padding:12px; }
+    .tab { display:none; } .tab.active { display:block; animation:fade .15s ease; }
+    @keyframes fade { from{opacity:0;transform:translateY(3px)} to{opacity:1;transform:none} }
+    .card { background:var(--card); border:1px solid var(--bdr); border-radius:16px; padding:14px; margin-bottom:12px; }
+    .sum3 { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+    .s-box { background:var(--card); border:1px solid var(--bdr); border-radius:14px; padding:10px 8px; }
+    .s-top { display:flex; align-items:center; gap:5px; margin-bottom:5px; }
+    .s-ic { width:22px; height:22px; border-radius:6px; display:grid; place-items:center; }
+    .s-box small { font-size:.67rem; color:var(--mut); font-weight:600; }
+    .s-box b { font-size:.86rem; display:block; }
+    .sum4 { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px; }
+    .g{color:var(--grn)} .r{color:var(--red)} .a{color:var(--amb)} .b{color:var(--pri)}
+    .bg-g{background:var(--grn-s);color:var(--grn)} .bg-r{background:var(--red-s);color:var(--red)} .bg-b{background:var(--pri-s);color:var(--pri)} .bg-a{background:var(--amb-s);color:var(--amb)}
+
+    /* Forms & Lists */
+    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+    .fg { margin-bottom:8px; }
+    label { display:block; font-size:.72rem; color:var(--mut); margin-bottom:3px; font-weight:500; }
+    input, select { width:100%; padding:9px 10px; border-radius:10px; border:1px solid var(--bdr); background:var(--bg); color:var(--txt); font-size:.85rem; outline:none; }
+    input:focus, select:focus { border-color:var(--pri); }
+    .btn { width:100%; padding:10px; border:none; border-radius:10px; font-size:.85rem; font-weight:600; color:#fff; background:var(--pri); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+    .btn-g{background:var(--grn)} .btn-r{background:var(--red)} .btn-a{background:var(--amb);color:#fff} .btn-sub{background:var(--sub);color:var(--txt)}
+    .dt-grp { display:flex; align-items:center; gap:5px; font-size:.7rem; font-weight:700; color:var(--mut); background:var(--bg); padding:4px 8px; border-radius:7px; margin:8px 0 4px; }
+    .item { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--bdr); gap:8px; }
+    .item:last-child { border-bottom:none; }
+    .item-l { display:flex; align-items:center; gap:9px; min-width:0; }
+    .it-ic { width:32px; height:32px; border-radius:9px; display:grid; place-items:center; flex-shrink:0; }
+    .item h4 { font-size:.84rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .item small { font-size:.7rem; color:var(--mut); display:block; }
+    .item-r { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+    .tag { font-size:.63rem; padding:2px 6px; border-radius:5px; margin-left:5px; font-weight:600; }
+    .t-cash { background:var(--grn-s); color:var(--grn); }
+    .t-due { background:var(--amb-s); color:var(--amb); }
+    .mini { padding:5px 8px; border-radius:7px; font-size:.69rem; font-weight:600; border:1px solid var(--bdr); background:var(--bg); color:var(--txt); cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+    .mini.del { color:var(--red); border-color:rgba(220,38,38,.25); }
+    .mini.pay { color:var(--grn); border-color:rgba(22,163,74,.25); }
+    .empty { text-align:center; padding:18px 8px; color:var(--mut); font-size:.78rem; display:flex; flex-direction:column; align-items:center; gap:6px; }
+
+    /* Calculator */
+    .c-scr { background:var(--bg); border:1px solid var(--bdr); border-radius:12px; padding:12px; text-align:right; margin-bottom:10px; }
+    .c-his { font-size:.75rem; color:var(--mut); min-height:16px; }
+    .c-val { font-size:1.85rem; font-weight:700; word-break:break-all; }
+    .c-pad { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; }
+    .c-key { padding:14px 0; border:none; border-radius:11px; background:var(--sub); color:var(--txt); font-size:1.05rem; font-weight:600; cursor:pointer; display:grid; place-items:center; }
+    .c-key.op{background:var(--pri);color:#fff} .c-key.eq{background:var(--grn);color:#fff} .c-key.cl{background:var(--red);color:#fff}
+
+    /* Profile & Accounts */
+    .prof-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .prof-top { display:flex; align-items:center; gap:12px; }
+    .avatar-wrap { width:58px; height:58px; border-radius:50%; background:var(--pri-s); color:var(--pri); display:grid; place-items:center; overflow:hidden; border:2px solid var(--pri); cursor:pointer; flex-shrink:0; }
+    .avatar-wrap img { width:100%; height:100%; object-fit:cover; }
+    .acc-item { display:flex; justify-content:space-between; align-items:center; padding:10px 11px; border:1px solid var(--bdr); border-radius:11px; margin-bottom:7px; cursor:pointer; background:var(--bg); }
+    .acc-item.active { border-color:var(--pri); background:var(--pri-s); }
+    .seg { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:5px; }
+    .seg.two { grid-template-columns:1fr 1fr; }
+    .seg button { padding:8px 6px; border-radius:9px; border:1px solid var(--bdr); background:var(--bg); color:var(--txt); font-size:.75rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:5px; }
+    .seg button.active { background:var(--pri); color:#fff; border-color:var(--pri); }
+
+    /* Charts, Progress Bars & Filter Pills */
+    .ch-card { background:var(--card); border:1px solid var(--bdr); border-radius:16px; padding:11px 12px; margin-bottom:12px; }
+    .ch-bar { display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+    .pills { display:inline-flex; background:var(--bg); padding:3px; border-radius:9px; border:1px solid var(--bdr); gap:2px; }
+    .pills button { border:none; background:none; color:var(--mut); font-size:.66rem; font-weight:600; padding:4px 8px; border-radius:7px; cursor:pointer; }
+    .pills button.active { background:var(--pri); color:#fff; }
+    .ch-wrap { position:relative; height:148px; width:100%; }
+    .prog-bg { width:100%; height:7px; background:var(--sub); border-radius:999px; overflow:hidden; margin-top:5px; }
+    .prog-fill { height:100%; border-radius:999px; transition:width .25s ease; }
+    .lim-row { margin-top:8px; padding-top:8px; border-top:1px solid var(--bdr); }
+    .lim-top { display:flex; justify-content:space-between; align-items:center; font-size:.73rem; }
+    .emp-card { border:1px solid var(--bdr); border-radius:12px; padding:10px 11px; margin-bottom:8px; background:var(--bg); cursor:pointer; transition:.15s; }
+    .emp-card:hover { border-color:var(--pri); }
+    .chk-row { display:flex; align-items:center; gap:8px; margin:6px 0 10px; font-size:.76rem; font-weight:600; color:var(--txt); cursor:pointer; user-select:none; }
+    .chk-row input[type="checkbox"] { width:16px; height:16px; accent-color:var(--pri); margin:0; cursor:pointer; }
+
+    /* FAB, Action Sheet & Modals */
+    .fab { position:fixed; right:18px; bottom:20px; width:52px; height:52px; border-radius:50%; background:var(--pri); color:#fff; border:none; box-shadow:0 8px 22px rgba(37,99,235,.38); cursor:pointer; z-index:80; display:grid; place-items:center; }
+    .fab-menu { position:fixed; right:18px; bottom:80px; background:var(--card); border:1px solid var(--bdr); border-radius:14px; padding:6px; box-shadow:0 12px 28px rgba(0,0,0,.15); z-index:85; display:none; flex-direction:column; gap:4px; min-width:190px; }
+    .fab-menu button { background:none; border:none; color:var(--txt); padding:9px 11px; border-radius:9px; font-size:.8rem; font-weight:600; display:flex; align-items:center; gap:8px; cursor:pointer; text-align:left; }
+    .fab-menu button:hover { background:var(--bg); }
+    .modal { position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:16px; z-index:200; }
+    .m-box { background:var(--card); border:1px solid var(--bdr); border-radius:16px; padding:16px; width:100%; max-width:380px; }
+    .credits { text-align:center; font-size:.73rem; color:var(--mut); padding:10px 0 4px; line-height:1.55; }
+    #toast { position:fixed; bottom:84px; left:50%; transform:translateX(-50%); background:var(--txt); color:var(--card); padding:7px 14px; border-radius:999px; font-size:.75rem; font-weight:600; z-index:350; display:none; }
+  </style>
+</head>
+<body>
+
+<!-- 1. Welcome / Login Screen -->
+<div id="welcome">
+  <div class="w-card">
+    <div class="w-logo" data-ic="wallet" data-sz="lg"></div>
+    <h1 data-i18n="appTitle">আমার হিসাব</h1>
+    <p data-i18n="wSub">ব্যক্তিগত ও ব্যবসার সহজ অফলাইন এবং ক্লাউড হিসাব খাতা</p>
+    <button class="w-btn w-g" onclick="googleLogin()"><span data-ic="shield"></span><span data-i18n="loginG">Google দিয়ে লগইন করুন</span></button>
+    <button class="w-btn w-gst" onclick="enterGuest()"><span data-ic="user"></span><span data-i18n="guestBtn">গেস্ট মোডে চালান</span></button>
+  </div>
+</div>
+
+<!-- 2. Clean Fintech Header & Dynamic Mode Tabs -->
+<div class="top-wrap">
+  <header>
+    <div class="brand">
+      <div class="brand-ic" data-ic="wallet"></div>
+      <h2 data-i18n="appTitle">আমার হিসাব</h2>
+      <button class="acc-pill" onclick="openProfile()" title="Switch Account">
+        <span id="activeAccBadge">ব্যক্তিগত</span>
+        <i data-ic="chevDown" data-sz="sm"></i>
+      </button>
+    </div>
+    <div class="h-acts">
+      <button class="icon-btn" onclick="cycleTheme()" id="thQuick" title="Theme"><i data-ic="sunMoon"></i></button>
+      <button class="av-btn" onclick="openProfile()" title="Profile & Settings">
+        <img id="hdrImg" style="display:none" alt="Profile" />
+        <span id="hdrUserIc" data-ic="user"></span>
+        <span class="sync-dot" id="sDot" title="Sync Status"></span>
+      </button>
+    </div>
+  </header>
+  <nav class="top-tabs" id="modeTabs"></nav>
+</div>
+
+<div class="wrap">
+  <!-- ================= PERSONAL MODE TABS ================= -->
+  <!-- P1: জমা ও খরচ (Daily + Salary + Spending Limits) -->
+  <section id="tab-p_daily" class="tab active">
+    <div id="chart-p_daily"></div>
+    <div class="sum3">
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-g" data-ic="arrowDown" data-sz="sm"></span><small data-i18n="inc">জমা / আয়</small></div><b class="g" id="dIn">৳ 0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-r" data-ic="arrowUp" data-sz="sm"></span><small data-i18n="exp">খরচ / ব্যয়</small></div><b class="r" id="dOut">৳ 0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-b" data-ic="wallet" data-sz="sm"></span><small data-i18n="rem">অবশিষ্ট</small></div><b class="b" id="dBal">৳ 0</b></div>
+    </div>
+
+    <!-- Direct Salary / Main Income & Spending Limits Card -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <h4 style="font-size:.82rem;display:flex;align-items:center;gap:6px;"><span class="s-ic bg-g" data-ic="briefcase" data-sz="sm"></span><span data-i18n="salTitle">বেতন ও খরচের লিমিট</span></h4>
+        <div style="display:flex;gap:5px;">
+          <button class="mini" style="color:var(--grn);border-color:var(--grn);" onclick="addSalaryDlg()"><i data-ic="plus" data-sz="sm"></i><span data-i18n="addSal">বেতন যোগ</span></button>
+          <button class="mini" style="color:var(--pri);border-color:var(--pri);" onclick="setLimitsDlg()"><i data-ic="sliders" data-sz="sm"></i><span data-i18n="setLim">লিমিট</span></button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.74rem;">
+        <span><span data-i18n="totSal">মোট বেতন/মূল আয়:</span> <b class="g" id="salTotVal">৳ 0</b></span>
+        <span><span data-i18n="rem">অবশিষ্ট:</span> <b class="b" id="salRemVal">৳ 0</b></span>
+      </div>
+      <div class="prog-bg"><div class="prog-fill" id="salProg" style="width:0%;background:var(--grn);"></div></div>
+      <div id="limitsBox"></div>
+    </div>
+
+    <div class="card">
+      <div class="row2">
+        <div><label data-i18n="type">ধরন</label><select id="dType"><option value="expense" data-i18n="optExp">খরচ (-)</option><option value="income" data-i18n="optInc">জমা (+)</option></select></div>
+        <div><label data-i18n="amt">পরিমাণ</label><input type="number" id="dAmt" placeholder="0" /></div>
+      </div>
+      <div class="row2">
+        <div><label data-i18n="note">বিবরণ</label><input type="text" id="dNote" data-i18n-ph="phDaily" placeholder="বেতন, বিল, ভাড়া..." /></div>
+        <div><label data-i18n="date">তারিখ</label><input type="date" id="dDate" /></div>
+      </div>
+      <button class="btn" onclick="addDaily()"><i data-ic="check" data-sz="sm"></i><span data-i18n="save">সেভ করুন</span></button>
+    </div>
+    <div class="card"><div id="dList"></div></div>
+  </section>
+
+  <!-- P2: সঞ্চয় (Savings) -->
+  <section id="tab-p_sav" class="tab">
+    <div id="chart-p_sav"></div>
+    <div class="sum3">
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-g" data-ic="vault" data-sz="sm"></span><small data-i18n="sDep">মোট জমা</small></div><b class="g" id="sDep">৳ 0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-r" data-ic="arrowUp" data-sz="sm"></span><small data-i18n="sSpd">সঞ্চয় খরচ</small></div><b class="r" id="sSpd">৳ 0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-a" data-ic="shield" data-sz="sm"></span><small data-i18n="sRem">বর্তমান সঞ্চয়</small></div><b class="a" id="sRem">৳ 0</b></div>
+    </div>
+    <div class="card">
+      <div class="row2">
+        <div><label data-i18n="type">ধরন</label><select id="sType"><option value="deposit" data-i18n="optDep">সঞ্চয় জমা (+)</option><option value="spend" data-i18n="optSpd">সঞ্চয় থেকে খরচ (-)</option></select></div>
+        <div><label data-i18n="amt">পরিমাণ</label><input type="number" id="sAmt" placeholder="0" /></div>
+      </div>
+      <div class="row2">
+        <div><label data-i18n="note">লক্ষ্য / কারণ</label><input type="text" id="sNote" data-i18n-ph="phSav" placeholder="মাসিক সঞ্চয়..." /></div>
+        <div><label data-i18n="date">তারিখ</label><input type="date" id="sDate" /></div>
+      </div>
+      <button class="btn btn-a" onclick="addSav()"><i data-ic="check" data-sz="sm"></i><span data-i18n="update">আপডেট করুন</span></button>
+    </div>
+    <div class="card"><div id="sList"></div></div>
+  </section>
+
+  <!-- P3: বাজার (Shopping / Bazar with Daily, Weekly, Monthly Filters) -->
+  <section id="tab-p_mkt" class="tab">
+    <div id="chart-p_mkt"></div>
+    <div class="seg" style="margin-bottom:10px;">
+      <button id="mf-daily" class="active" onclick="setMktFilter('daily')" data-i18n="fDaily">দৈনিক</button>
+      <button id="mf-weekly" onclick="setMktFilter('weekly')" data-i18n="fWeekly">সাপ্তাহিক</button>
+      <button id="mf-monthly" onclick="setMktFilter('monthly')" data-i18n="fMonthly">মাসিক</button>
+    </div>
+    <div class="sum3">
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-b" data-ic="bag" data-sz="sm"></span><small data-i18n="mPeriod">নির্বাচিত মোট</small></div><b class="b" id="mTot">৳ 0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-g" data-ic="check" data-sz="sm"></span><small data-i18n="mCnt">পণ্য সংখ্যা</small></div><b class="g" id="mCnt">0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-a" data-ic="cal" data-sz="sm"></span><small data-i18n="mAll">সর্বমোট বাজার</small></div><b class="a" id="mToday">৳ 0</b></div>
+    </div>
+    <div class="card">
+      <div class="row2">
+        <div><label data-i18n="item">পণ্যের নাম</label><input type="text" id="mItem" data-i18n-ph="phMkt" placeholder="চাল, মাছ, সবজি..." /></div>
+        <div><label data-i18n="amt">দাম (৳)</label><input type="number" id="mAmt" placeholder="0" /></div>
+      </div>
+      <div class="row2">
+        <div><label data-i18n="qty">পরিমাণ / নোট</label><input type="text" id="mQty" data-i18n-ph="phQty" placeholder="২ কেজি / ১ লিটার" /></div>
+        <div><label data-i18n="date">তারিখ</label><input type="date" id="mDate" /></div>
+      </div>
+      <label class="chk-row"><input type="checkbox" id="mDeduct" checked /><span data-i18n="deductSal">বেতন/মূল ব্যালেন্স থেকে কাটুন</span></label>
+      <button class="btn" onclick="addMkt()"><i data-ic="plus" data-sz="sm"></i><span data-i18n="addMkt">বাজার যোগ করুন</span></button>
+    </div>
+    <div class="card"><div id="mList"></div></div>
+  </section>
+
+  <!-- P4: ক্যালকুলেটর (Smart Calculator) -->
+  <section id="tab-p_calc" class="tab">
+    <div class="card">
+      <div class="c-scr"><div class="c-his" id="cHis"></div><div class="c-val" id="cVal">0</div></div>
+      <div class="c-pad">
+        <button class="c-key cl" onclick="cClr()">C</button><button class="c-key" onclick="cDel()"><i data-ic="back"></i></button><button class="c-key op" onclick="cAdd('%')">%</button><button class="c-key op" onclick="cAdd('/')">÷</button>
+        <button class="c-key" onclick="cAdd('7')">7</button><button class="c-key" onclick="cAdd('8')">8</button><button class="c-key" onclick="cAdd('9')">9</button><button class="c-key op" onclick="cAdd('*')">×</button>
+        <button class="c-key" onclick="cAdd('4')">4</button><button class="c-key" onclick="cAdd('5')">5</button><button class="c-key" onclick="cAdd('6')">6</button><button class="c-key op" onclick="cAdd('-')">−</button>
+        <button class="c-key" onclick="cAdd('1')">1</button><button class="c-key" onclick="cAdd('2')">2</button><button class="c-key" onclick="cAdd('3')">3</button><button class="c-key op" onclick="cAdd('+')">+</button>
+        <button class="c-key" onclick="cAdd('00')">00</button><button class="c-key" onclick="cAdd('0')">0</button><button class="c-key" onclick="cAdd('.')">.</button><button class="c-key eq" onclick="cEq()">=</button>
+      </div>
+      <div class="row2" style="margin-top:10px;margin-bottom:0;">
+        <button class="btn btn-g" onclick="sendDaily('income')"><i data-ic="plus" data-sz="sm"></i><span data-i18n="toInc">জমায় যোগ</span></button>
+        <button class="btn btn-r" onclick="sendDaily('expense')"><i data-ic="minus" data-sz="sm"></i><span data-i18n="toExp">খরচে যোগ</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- P5: অনুষ্ঠান (Optional Event/Picnic Tab) -->
+  <section id="tab-p_ev" class="tab">
+    <div class="card">
+      <div class="row2" style="margin-bottom:0;">
+        <select id="evSel" onchange="renderEv()"></select>
+        <button class="btn btn-sub" onclick="newEvDlg()"><i data-ic="plus" data-sz="sm"></i><span data-i18n="newEv">নতুন অনুষ্ঠান</span></button>
+      </div>
+    </div>
+    <div class="sum3">
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-g" data-ic="arrowDown" data-sz="sm"></span><small data-i18n="eFund">মোট চাঁদা</small></div><b class="g" id="eFund">৳ 0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-r" data-ic="arrowUp" data-sz="sm"></span><small data-i18n="eCost">মোট খরচ</small></div><b class="r" id="eCost">৳ 0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-b" data-ic="wallet" data-sz="sm"></span><small data-i18n="eBal">অবশিষ্ট</small></div><b class="b" id="eBal">৳ 0</b></div>
+    </div>
+    <div class="card">
+      <div class="row2">
+        <div><label data-i18n="type">ধরন</label><select id="eType"><option value="fund" data-i18n="optFund">চাঁদা জমা (+)</option><option value="expense" data-i18n="optMkt">অনুষ্ঠান খরচ (-)</option></select></div>
+        <div><label data-i18n="amt">পরিমাণ</label><input type="number" id="eAmt" placeholder="0" /></div>
+      </div>
+      <div class="fg"><label data-i18n="mem">সদস্য / বিবরণ</label><input type="text" id="eNote" data-i18n-ph="phEv" placeholder="সদস্য বা খরচের নাম" /></div>
+      <button class="btn btn-g" onclick="addEv()"><i data-ic="plus" data-sz="sm"></i><span data-i18n="add">যোগ করুন</span></button>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <small data-i18n="evList">অনুষ্ঠানের তালিকা</small>
+        <div style="display:flex;gap:6px;">
+          <button class="mini" onclick="toggleEvTab(false)" data-i18n="hideTab">ট্যাব লুকান</button>
+          <button class="mini del" onclick="delEv()"><i data-ic="trash" data-sz="sm"></i></button>
+        </div>
+      </div>
+      <div id="eList"></div>
+    </div>
+  </section>
+
+  <!-- ================= BUSINESS MODE TABS ================= -->
+  <!-- B1: দৈনিক হিসাব (Business Daily Ledger) -->
+  <section id="tab-b_daily" class="tab">
+    <div id="chart-b_daily"></div>
+    <div class="sum3">
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-g" data-ic="arrowDown" data-sz="sm"></span><small data-i18n="bIn">বিক্রি / আয়</small></div><b class="g" id="bdIn">৳ 0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-r" data-ic="arrowUp" data-sz="sm"></span><small data-i18n="bOut">খরচ</small></div><b class="r" id="bdOut">৳ 0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-b" data-ic="chart" data-sz="sm"></span><small data-i18n="bNet">লাভ / ক্ষতি</small></div><b class="b" id="bdNet">৳ 0</b></div>
+    </div>
+    <div class="card">
+      <div class="row2">
+        <div><label data-i18n="type">ধরন</label><select id="bdType"><option value="income" data-i18n="optSale">নগদ বিক্রি / আয় (+)</option><option value="expense" data-i18n="optCost">মাল ক্রয় / খরচ (-)</option></select></div>
+        <div><label data-i18n="amt">পরিমাণ</label><input type="number" id="bdAmt" placeholder="0" /></div>
+      </div>
+      <div class="row2">
+        <div><label data-i18n="note">বিবরণ</label><input type="text" id="bdNote" data-i18n-ph="phBiz" placeholder="পণ্যের বা খরচের বিবরণ" /></div>
+        <div><label data-i18n="date">তারিখ</label><input type="date" id="bdDate" /></div>
+      </div>
+      <button class="btn" onclick="addBizDaily()"><i data-ic="check" data-sz="sm"></i><span data-i18n="save">সেভ করুন</span></button>
+    </div>
+    <div class="card"><div id="bdList"></div></div>
+  </section>
+
+  <!-- B2: দেনা-পাওনা (Receivable & Payable) -->
+  <section id="tab-b_due" class="tab">
+    <div id="chart-b_due"></div>
+    <div class="sum3">
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-g" data-ic="arrowDown" data-sz="sm"></span><small data-i18n="rec">মোট পাওনা</small></div><b class="g" id="duRec">৳ 0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-r" data-ic="arrowUp" data-sz="sm"></span><small data-i18n="pay">মোট দেনা</small></div><b class="r" id="duPay">৳ 0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-b" data-ic="swap" data-sz="sm"></span><small data-i18n="netDue">নিট বাকি</small></div><b class="b" id="duNet">৳ 0</b></div>
+    </div>
+    <div class="card">
+      <div class="row2">
+        <div><label data-i18n="type">ধরন</label><select id="duType"><option value="receivable" data-i18n="optRec">পাওনা (কাস্টমার বাকি)</option><option value="payable" data-i18n="optPay">দেনা (মহাজন বাকি)</option></select></div>
+        <div><label data-i18n="amt">পরিমাণ</label><input type="number" id="duAmt" placeholder="0" /></div>
+      </div>
+      <div class="row2">
+        <div><label data-i18n="party">ব্যক্তি / প্রতিষ্ঠান</label><input type="text" id="duParty" data-i18n-ph="phParty" placeholder="কাস্টমার বা মহাজনের নাম" /></div>
+        <div><label data-i18n="date">তারিখ</label><input type="date" id="duDate" /></div>
+      </div>
+      <button class="btn" onclick="addBizDue()"><i data-ic="plus" data-sz="sm"></i><span data-i18n="save">সেভ করুন</span></button>
+    </div>
+    <div class="card"><div id="duList"></div></div>
+  </section>
+
+  <!-- B3: সেভিংস (Business Vault / Reserve) -->
+  <section id="tab-b_sav" class="tab">
+    <div id="chart-b_sav"></div>
+    <div class="sum3">
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-g" data-ic="safe" data-sz="sm"></span><small data-i18n="bsIn">মোট রিজার্ভ</small></div><b class="g" id="bsIn">৳ 0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-r" data-ic="arrowUp" data-sz="sm"></span><small data-i18n="bsOut">উত্তোলন</small></div><b class="r" id="bsOut">৳ 0</b></div>
+      <div class="s-box"><div class="s-top"><span class="s-ic bg-a" data-ic="shield" data-sz="sm"></span><small data-i18n="bsRem">নিট সেভিংস</small></div><b class="a" id="bsRem">৳ 0</b></div>
+    </div>
+    <div class="card">
+      <div class="row2">
+        <div><label data-i18n="type">ধরন</label><select id="bsType"><option value="deposit" data-i18n="optBsIn">রিজার্ভ জমা (+)</option><option value="withdraw" data-i18n="optBsOut">রিজার্ভ উত্তোলন (-)</option></select></div>
+        <div><label data-i18n="amt">পরিমাণ</label><input type="number" id="bsAmt" placeholder="0" /></div>
+      </div>
+      <div class="row2">
+        <div><label data-i18n="note">বিবরণ</label><input type="text" id="bsNote" data-i18n-ph="phBs" placeholder="লভ্যাংশ জমা / মূলধন..." /></div>
+        <div><label data-i18n="date">তারিখ</label><input type="date" id="bsDate" /></div>
+      </div>
+      <button class="btn btn-a" onclick="addBizSav()"><i data-ic="check" data-sz="sm"></i><span data-i18n="update">আপডেট করুন</span></button>
+    </div>
+    <div class="card"><div id="bsList"></div></div>
+  </section>
+
+  <!-- B4: কর্মচারী হিসাব (Advanced Employee Payroll & Individual Breakdown) -->
+  <section id="tab-b_staff" class="tab">
+    <div id="staffOverview">
+      <div id="chart-b_staff"></div>
+      <div class="sum4">
+        <div class="s-box"><div class="s-top"><span class="s-ic bg-g" data-ic="arrowDown" data-sz="sm"></span><small data-i18n="stCrTot">মোট জমা</small></div><b class="g" id="stCr">৳ 0</b></div>
+        <div class="s-box"><div class="s-top"><span class="s-ic bg-r" data-ic="arrowUp" data-sz="sm"></span><small data-i18n="stPdTot">মোট খরচ</small></div><b class="r" id="stPd">৳ 0</b></div>
+        <div class="s-box"><div class="s-top"><span class="s-ic bg-a" data-ic="swap" data-sz="sm"></span><small data-i18n="stAdvTot">মোট অগ্রিম</small></div><b class="a" id="stAdv">৳ 0</b></div>
+        <div class="s-box"><div class="s-top"><span class="s-ic bg-b" data-ic="wallet" data-sz="sm"></span><small data-i18n="stNetDue">নিট পাওনা / বকেয়া</small></div><b class="b" id="stNet">৳ 0</b></div>
+      </div>
+
+      <!-- Employee Roster -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <h4 style="font-size:.84rem;display:flex;align-items:center;gap:6px;"><i data-ic="users" data-sz="sm"></i><span data-i18n="empRoster">কর্মচারী তালিকা</span></h4>
+          <button class="mini" style="color:var(--pri);border-color:var(--pri);" onclick="openAddEmpModal()"><i data-ic="plus" data-sz="sm"></i><span data-i18n="addEmp">নতুন কর্মচারী</span></button>
+        </div>
+        <div id="empList"></div>
+      </div>
+
+      <!-- Quick Payroll Entry -->
+      <div class="card">
+        <h4 style="font-size:.82rem;margin-bottom:8px;" data-i18n="logPay">জমা / খরচ / অগ্রিম লিখুন</h4>
+        <div class="row2">
+          <div><label data-i18n="selEmp">কর্মচারী</label><select id="stEmpSel"></select></div>
+          <div><label data-i18n="type">ধরন</label><select id="stType"><option value="credit" data-i18n="optStCr">জমা (বেতন/মজুরি +)</option><option value="paid" data-i18n="optStPd">খরচ (বেতন পরিশোধ -)</option><option value="advance" data-i18n="optStAdv">অগ্রিম প্রদান (-)</option></select></div>
+        </div>
+        <div class="row2">
+          <div><label data-i18n="amt">পরিমাণ</label><input type="number" id="stAmt" placeholder="0" /></div>
+          <div><label data-i18n="date">তারিখ</label><input type="date" id="stDate" /></div>
+        </div>
+        <div class="fg"><label data-i18n="note">নোট (ঐচ্ছিক)</label><input type="text" id="stNote" data-i18n-ph="phStNote" placeholder="মাস / কাজের বিবরণ..." /></div>
+        <label class="chk-row"><input type="checkbox" id="stToCashbook" checked /><span data-i18n="logBizCash">খরচ ও অগ্রিম ব্যবসার দৈনিক হিসাবেও যোগ করুন</span></label>
+        <button class="btn" onclick="addBizStaff()"><i data-ic="check" data-sz="sm"></i><span data-i18n="save">সেভ করুন</span></button>
+      </div>
+      <div class="card"><div id="stList"></div></div>
+    </div>
+
+    <!-- Individual Employee Detail View -->
+    <div id="staffDetail" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <button class="mini" onclick="closeEmpDetail()"><i data-ic="arrowLeft" data-sz="sm"></i><span data-i18n="back">ফিরে যান</span></button>
+        <button class="mini del" id="delEmpBtn"><i data-ic="trash" data-sz="sm"></i><span data-i18n="delEmp">কর্মচারী মুছুন</span></button>
+      </div>
+      <div class="card" id="empProfileCard"></div>
+      <div class="sum4">
+        <div class="s-box"><div class="s-top"><span class="s-ic bg-g" data-ic="arrowDown" data-sz="sm"></span><small data-i18n="stCrTot">মোট জমা</small></div><b class="g" id="empTotCr">৳ 0</b></div>
+        <div class="s-box"><div class="s-top"><span class="s-ic bg-r" data-ic="arrowUp" data-sz="sm"></span><small data-i18n="stPdTot">মোট খরচ</small></div><b class="r" id="empTotPd">৳ 0</b></div>
+        <div class="s-box"><div class="s-top"><span class="s-ic bg-a" data-ic="swap" data-sz="sm"></span><small data-i18n="stAdvTot">মোট অগ্রিম</small></div><b class="a" id="empTotAdv">৳ 0</b></div>
+        <div class="s-box"><div class="s-top"><span class="s-ic bg-b" data-ic="wallet" data-sz="sm"></span><small data-i18n="stNetDue">নিট পাওনা / বকেয়া</small></div><b class="b" id="empTotNet">৳ 0</b></div>
+      </div>
+      <div id="chart-emp_detail"></div>
+      <div class="sum3">
+        <div class="s-box"><div class="s-top"><span class="s-ic bg-b" data-ic="cal" data-sz="sm"></span><small data-i18n="fWeekly">সাপ্তাহিক</small></div><b class="b" id="empWNet">৳ 0</b><small id="empWSub" style="font-size:.63rem;"></small></div>
+        <div class="s-box"><div class="s-top"><span class="s-ic bg-g" data-ic="cal" data-sz="sm"></span><small data-i18n="fMonthly">মাসিক</small></div><b class="g" id="empMNet">৳ 0</b><small id="empMSub" style="font-size:.63rem;"></small></div>
+        <div class="s-box"><div class="s-top"><span class="s-ic bg-a" data-ic="chart" data-sz="sm"></span><small data-i18n="fYearly">বার্ষিক</small></div><b class="a" id="empYNet">৳ 0</b><small id="empYSub" style="font-size:.63rem;"></small></div>
+      </div>
+      <div class="card"><div id="empTxList"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= DEDICATED PROFILE & SETTINGS VIEW ================= -->
+  <section id="tab-prof" class="tab">
+    <div class="prof-head">
+      <button class="mini" onclick="closeProfile()"><i data-ic="arrowLeft" data-sz="sm"></i><span data-i18n="back">ফিরে যান</span></button>
+      <span id="syncBadgeText" style="font-size:.72rem;font-weight:600;color:var(--mut);"></span>
+    </div>
+
+    <!-- Profile Card -->
+    <div class="card">
+      <div class="prof-top">
+        <div class="avatar-wrap" onclick="$('picInput').click()" title="Change Photo">
+          <img id="profImg" style="display:none" alt="Profile" />
+          <span id="profInit" data-ic="user" data-sz="lg"></span>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <h3 id="profName" style="font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">গেস্ট ব্যবহারকারী</h3>
+            <button class="mini" onclick="editNameDlg()"><i data-ic="edit" data-sz="sm"></i></button>
+          </div>
+          <small id="profEmail" style="color:var(--mut);display:block;margin-top:2px;">গেস্ট মোড (অফলাইন)</small>
+          <button class="mini" style="margin-top:6px;color:var(--pri);border-color:var(--pri);" onclick="$('picInput').click()">
+            <i data-ic="cam" data-sz="sm"></i><span data-i18n="chgPic">ছবি পরিবর্তন</span>
+          </button>
+        </div>
+      </div>
+      <input type="file" id="picInput" accept="image/*" style="display:none" onchange="uploadPic(event)" />
+    </div>
+
+    <!-- Multi-Account Switcher -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <h4 style="font-size:.84rem;display:flex;align-items:center;gap:6px;"><i data-ic="layers" data-sz="sm"></i><span data-i18n="multiAcc">অ্যাকাউন্ট নির্বাচন</span></h4>
+        <button class="mini" style="color:var(--pri);border-color:var(--pri);" onclick="newBizAccDlg()"><i data-ic="plus" data-sz="sm"></i><span data-i18n="newBizAcc">নতুন ব্যবসা</span></button>
+      </div>
+      <div id="accList"></div>
+    </div>
+
+    <!-- Settings -->
+    <div class="card">
+      <div class="fg">
+        <label data-i18n="langLbl">ভাষা (Language)</label>
+        <div class="seg two">
+          <button id="l-bn" onclick="setLang('bn')">বাংলা</button>
+          <button id="l-en" onclick="setLang('en')">English</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label data-i18n="thLbl">থিম (Theme)</label>
+        <div class="seg">
+          <button id="th-light" onclick="setTheme('light')"><i data-ic="sun" data-sz="sm"></i><span data-i18n="light">লাইট</span></button>
+          <button id="th-dark" onclick="setTheme('dark')"><i data-ic="moon" data-sz="sm"></i><span data-i18n="dark">ডার্ক</span></button>
+          <button id="th-system" onclick="setTheme('system')"><i data-ic="monitor" data-sz="sm"></i><span data-i18n="system">সিস্টেম</span></button>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:0;">
+        <label data-i18n="bkpLbl">ব্যাকআপ ও অ্যাকাউন্ট</label>
+        <div class="seg">
+          <button onclick="exportJson()"><i data-ic="download" data-sz="sm"></i><span data-i18n="expBtn">এক্সপোর্ট</span></button>
+          <button onclick="$('impFile').click()"><i data-ic="upload" data-sz="sm"></i><span data-i18n="impBtn">ইম্পোর্ট</span></button>
+          <button id="authActionBtn" onclick="googleLogin()" style="color:var(--pri);"></button>
+        </div>
+        <input type="file" id="impFile" accept=".json" style="display:none" onchange="importJson(event)" />
+      </div>
+    </div>
+
+    <!-- Footer Credits -->
+    <div class="credits">
+      <div><strong>Developer: Foysal Ahmed</strong></div>
+      <div>Contact: foyaalahamed121@gmail.com</div>
+    </div>
+  </section>
+</div>
+
+<!-- Floating Action Button & Personal Quick Menu -->
+<div class="fab-menu" id="fabMenu">
+  <button onclick="fabAction('focus')"><i data-ic="plus" data-sz="sm"></i><span data-i18n="quickEntry">নতুন হিসাব লিখুন</span></button>
+  <button id="evMenuToggle" onclick="fabAction('toggleEv')"><i data-ic="sparkles" data-sz="sm"></i><span id="evMenuTxt">অনুষ্ঠান ট্যাব যোগ করুন</span></button>
+</div>
+<button class="fab" id="fabBtn" onclick="onFabClick()" aria-label="Quick Action"><i data-ic="plus"></i></button>
+
+<!-- Custom Dialog Modal -->
+<div class="modal" id="dlgModal">
+  <div class="m-box">
+    <h4 id="dlgT" style="margin-bottom:8px;font-size:.95rem;"></h4>
+    <div id="dlgBody"></div>
+    <div class="row2" style="margin-top:10px;margin-bottom:0;">
+      <button class="btn btn-sub" id="dlgNo" data-i18n="cancel">বাতিল</button>
+      <button class="btn" id="dlgYes" data-i18n="confirm">নিশ্চিত</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyArnhvmaLq-Qi93NvWCfw8YnmqF7bX4wng",
+    authDomain: "amar-hisab-89144.firebaseapp.com",
+    projectId: "amar-hisab-89144",
+    storageBucket: "amar-hisab-89144.firebasestorage.app",
+    messagingSenderId: "1037808502896",
+    appId: "1:1037808502896:web:136effa81241a789fc4cb5",
+    measurementId: "G-H86C6774DQ"
+  };
+
+  // Crisp 1.8px Stroke Inline SVG Library (Vault Shield-Coin replaces Piggy Bank)
+  const ICONS = {
+    wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+    vault: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="11" r="3"/><path d="M12 8v1"/><path d="M12 13v1"/>',
+    bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+    calc: '<rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/>',
+    sparkles: '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/>',
+    chart: '<line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/>',
+    swap: '<path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',
+    safe: '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="3"/><path d="m14.5 9.5 1.5-1.5"/><path d="m8 16 1.5-1.5"/><path d="m14.5 14.5 1.5 1.5"/><path d="m8 8 1.5 1.5"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+    shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+    chevDown: '<path d="m6 9 6 6 6-6"/>',
+    sunMoon: '<path d="M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.9 4.9 1.4 1.4"/><path d="m17.7 17.7 1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.3 17.7-1.4 1.4"/><path d="m19.1 4.9-1.4 1.4"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+    moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+    monitor: '<rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>',
+    arrowDown: '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+    arrowUp: '<path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>',
+    arrowLeft: '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+    plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+    minus: '<path d="M5 12h14"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+    back: '<path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" x2="12" y1="9" y2="15"/><line x1="12" x2="18" y1="9" y2="15"/>',
+    cal: '<rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>',
+    edit: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+    cam: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+    layers: '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+    upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>',
+    briefcase: '<rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+    inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+    sliders: '<line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/>'
+  };
+  const svg = (name, sz='') => `<svg class="ic ${sz?'ic-'+sz:''}" viewBox="0 0 24 24">${ICONS[name]||''}</svg>`;
+  function hydrateIcons() {
+    document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = svg(el.dataset.ic, el.dataset.sz||''); });
+  }
+
+  const I18N = {
+    bn: {
+      appTitle:"আমার হিসাব", wSub:"ব্যক্তিগত ও ব্যবসার সহজ অফলাইন এবং ক্লাউড হিসাব খাতা",
+      loginG:"Google দিয়ে লগইন করুন", guestBtn:"গেস্ট মোডে চালান",
+      pDaily:"জমা ও খরচ", pSav:"সঞ্চয়", pMkt:"বাজার", pCalc:"ক্যালকুলেটর", pEv:"অনুষ্ঠান",
+      bDaily:"দৈনিক হিসাব", bDue:"দেনা-পাওনা", bSav:"সেভিংস", bStaff:"কর্মচারী হিসাব",
+      inc:"জমা / আয়", exp:"খরচ / ব্যয়", rem:"অবশিষ্ট", type:"ধরন", amt:"পরিমাণ", note:"বিবরণ", date:"তারিখ", save:"সেভ করুন",
+      optExp:"খরচ (-)", optInc:"জমা (+)", phDaily:"বেতন, বিল, ভাড়া...",
+      salTitle:"বেতন ও খরচের লিমিট", addSal:"বেতন যোগ", setLim:"লিমিট", totSal:"মোট বেতন/মূল আয়:",
+      limW:"সাপ্তাহিক লিমিট", limM:"মাসিক লিমিট", limY:"বার্ষিক লিমিট", warnLim:"সতর্কতা!", overLim:"লিমিট অতিক্রম!",
+      fDaily:"দৈনিক", fWeekly:"সাপ্তাহিক", fMonthly:"মাসিক", fYearly:"বার্ষিক",
+      chComp:"তুলনা", chSingle:"আলাদা দেখুন", chIncOnly:"শুধু জমা", chExpOnly:"শুধু খরচ",
+      toInc:"জমায় যোগ", toExp:"খরচে যোগ",
+      sDep:"মোট জমা", sSpd:"সঞ্চয় খরচ", sRem:"বর্তমান সঞ্চয়", optDep:"সঞ্চয় জমা (+)", optSpd:"সঞ্চয় থেকে খরচ (-)", phSav:"মাসিক সঞ্চয়...", update:"আপডেট করুন",
+      mPeriod:"নির্বাচিত মোট", mCnt:"পণ্য সংখ্যা", mAll:"সর্বমোট বাজার", item:"পণ্যের নাম", phMkt:"চাল, মাছ, সবজি...", qty:"পরিমাণ / নোট", phQty:"২ কেজি / ১ লিটার", addMkt:"বাজার যোগ করুন", deductSal:"বেতন/মূল ব্যালেন্স থেকে কাটুন", mDedTag:"বেতন থেকে কাটা",
+      newEv:"নতুন অনুষ্ঠান", eFund:"মোট চাঁদা", eCost:"মোট খরচ", eBal:"অবশিষ্ট", optFund:"চাঁদা জমা (+)", optMkt:"অনুষ্ঠান খরচ (-)", mem:"সদস্য / বিবরণ", phEv:"সদস্য বা খরচের নাম", add:"যোগ করুন", evList:"অনুষ্ঠানের তালিকা", hideTab:"ট্যাব লুকান",
+      bIn:"বিক্রি / আয়", bOut:"খরচ", bNet:"লাভ / ক্ষতি", optSale:"নগদ বিক্রি / আয় (+)", optCost:"মাল ক্রয় / খরচ (-)", phBiz:"পণ্যের বা খরচের বিবরণ",
+      rec:"মোট পাওনা", pay:"মোট দেনা", netDue:"নিট বাকি", optRec:"পাওনা (কাস্টমার বাকি)", optPay:"দেনা (মহাজন বাকি)", party:"ব্যক্তি / প্রতিষ্ঠান", phParty:"কাস্টমার বা মহাজনের নাম", settle:"আদায় / শোধ", settled:"পরিশোধিত",
+      bsIn:"মোট রিজার্ভ", bsOut:"উত্তোলন", bsRem:"নিট সেভিংস", optBsIn:"রিজার্ভ জমা (+)", optBsOut:"রিজার্ভ উত্তোলন (-)", phBs:"লভ্যাংশ জমা / মূলধন...",
+      stCrTot:"মোট জমা", stPdTot:"মোট খরচ", stAdvTot:"মোট অগ্রিম", stNetDue:"নিট পাওনা / বকেয়া", stName:"কর্মচারীর নাম", phStNote:"মাস / কাজের বিবরণ...",
+      optStCr:"জমা (বেতন/মজুরি +)", optStPd:"খরচ (বেতন পরিশোধ -)", optStAdv:"অগ্রিম প্রদান (-)", logBizCash:"খরচ ও অগ্রিম ব্যবসার দৈনিক হিসাবেও যোগ করুন",
+      empRoster:"কর্মচারী তালিকা", addEmp:"নতুন কর্মচারী", logPay:"জমা / খরচ / অগ্রিম লিখুন", selEmp:"কর্মচারী", delEmp:"কর্মচারী মুছুন",
+      payDaily:"দৈনিক মজুরি", payWeekly:"সাপ্তাহিক বেতন", payMonthly:"মাসিক বেতন", dueLbl:"বাকি:", paidLbl:"পরিশোধ:",
+      back:"ফিরে যান", chgPic:"ছবি পরিবর্তন", multiAcc:"অ্যাকাউন্ট নির্বাচন", newBizAcc:"নতুন ব্যবসা", personalAcc:"ব্যক্তিগত অ্যাকাউন্ট",
+      langLbl:"ভাষা (Language)", thLbl:"থিম (Theme)", light:"লাইট", dark:"ডার্ক", system:"সিস্টেম",
+      bkpLbl:"ব্যাকআপ ও অ্যাকাউন্ট", expBtn:"এক্সপোর্ট", impBtn:"ইম্পোর্ট", gLoginShort:"Google লগইন", logout:"লগআউট",
+      cancel:"বাতিল", confirm:"নিশ্চিত", offline:"অফলাইন (গেস্ট)", synced:"ক্লাউড সিঙ্ক সক্রিয়", syncing:"সিঙ্ক হচ্ছে...", noData:"কোনো হিসাব পাওয়া যায়নি",
+      quickEntry:"নতুন হিসাব লিখুন", addEvTab:"অনুষ্ঠান ট্যাব যোগ করুন", remEvTab:"অনুষ্ঠান ট্যাব লুকান",
+      newBizTitle:"নতুন ব্যবসায়িক অ্যাকাউন্টের নাম", newEvTitle:"নতুন অনুষ্ঠানের নাম", editNameTitle:"আপনার নাম লিখুন",
+      salDlgTitle:"বেতন / মূল আয় যোগ করুন", limDlgTitle:"খরচের লিমিট সেট করুন (৳)", empDlgTitle:"নতুন কর্মচারী যোগ করুন"
+    },
+    en: {
+      appTitle:"My Hisab", wSub:"Simple offline & cloud personal and business ledger",
+      loginG:"Sign in with Google", guestBtn:"Continue as Guest",
+      pDaily:"Income/Exp", pSav:"Savings", pMkt:"Bazar", pCalc:"Calculator", pEv:"Events",
+      bDaily:"Daily Ledger", bDue:"Due Ledger", bSav:"Savings", bStaff:"Staff",
+      inc:"Income", exp:"Expense", rem:"Balance", type:"Type", amt:"Amount", note:"Note", date:"Date", save:"Save Entry",
+      optExp:"Expense (-)", optInc:"Income (+)", phDaily:"Salary, Bills, Rent...",
+      salTitle:"Salary & Spending Limits", addSal:"Add Salary", setLim:"Limits", totSal:"Total Salary/Income:",
+      limW:"Weekly Limit", limM:"Monthly Limit", limY:"Yearly Limit", warnLim:"Near Limit!", overLim:"Limit Exceeded!",
+      fDaily:"Daily", fWeekly:"Weekly", fMonthly:"Monthly", fYearly:"Yearly",
+      chComp:"Compare", chSingle:"Single View", chIncOnly:"Income Only", chExpOnly:"Expense Only",
+      toInc:"Add Income", toExp:"Add Expense",
+      sDep:"Total Saved", sSpd:"Spent Savings", sRem:"Net Savings", optDep:"Deposit (+)", optSpd:"Spend Savings (-)", phSav:"Monthly goal...", update:"Update Savings",
+      mPeriod:"Period Total", mCnt:"Items", mAll:"All-Time Bazar", item:"Item Name", phMkt:"Rice, Fish, Veggies...", qty:"Qty / Note", phQty:"2 kg / 1 L", addMkt:"Add Bazar", deductSal:"Deduct from Salary/Main Balance", mDedTag:"Deducted",
+      newEv:"New Event", eFund:"Total Fund", eCost:"Expenses", eBal:"Remaining", optFund:"Contribution (+)", optMkt:"Expense (-)", mem:"Member / Item", phEv:"Member or item", add:"Add Entry", evList:"Event Entries", hideTab:"Hide Tab",
+      bIn:"Sales / Income", bOut:"Expenses", bNet:"Profit / Loss", optSale:"Cash Sale / Income (+)", optCost:"Purchase / Cost (-)", phBiz:"Item or expense note",
+      rec:"Receivable", pay:"Payable", netDue:"Net Due", optRec:"Receivable (Customer Due)", optPay:"Payable (Supplier Due)", party:"Party Name", phParty:"Customer or supplier", settle:"Settle", settled:"Settled",
+      bsIn:"Total Reserve", bsOut:"Withdrawn", bsRem:"Net Vault", optBsIn:"Deposit Reserve (+)", optBsOut:"Withdraw Reserve (-)", phBs:"Profit reserve / capital...",
+      stCrTot:"Total Earned", stPdTot:"Total Paid", stAdvTot:"Total Advance", stNetDue:"Net Payable / Due", stName:"Employee Name", phStNote:"Month / work note...",
+      optStCr:"Earned Credit (+)", optStPd:"Paid Salary (-)", optStAdv:"Advance Paid (-)", logBizCash:"Also log Paid & Advance in Business Daily Ledger",
+      empRoster:"Employee Roster", addEmp:"Add Employee", logPay:"Log Earned / Paid / Advance", selEmp:"Employee", delEmp:"Delete Employee",
+      payDaily:"Daily Wage", payWeekly:"Weekly Salary", payMonthly:"Monthly Salary", dueLbl:"Due:", paidLbl:"Paid:",
+      back:"Back", chgPic:"Change Photo", multiAcc:"Switch Account", newBizAcc:"New Business", personalAcc:"Personal Account",
+      langLbl:"Language", thLbl:"Theme", light:"Light", dark:"Dark", system:"System",
+      bkpLbl:"Backup & Account", expBtn:"Export", impBtn:"Import", gLoginShort:"Google Login", logout:"Logout",
+      cancel:"Cancel", confirm:"Confirm", offline:"Offline (Guest)", synced:"Cloud Synced", syncing:"Syncing...", noData:"No entries yet",
+      quickEntry:"Quick Entry", addEvTab:"Show Events Tab", remEvTab:"Hide Events Tab",
+      newBizTitle:"New Business Account Name", newEvTitle:"New Event Name", editNameTitle:"Enter Your Name",
+      salDlgTitle:"Add Salary / Main Income", limDlgTitle:"Set Spending Limits (৳)", empDlgTitle:"Add New Employee"
+    }
+  };
+
+  const K = { guest:'hisab_guest_v5', cloud:'hisab_cloud_v5', sess:'hisab_sess_v5', lang:'hisab_lang', theme:'hisab_theme' };
+  let lang = localStorage.getItem(K.lang) || 'bn';
+  let theme = localStorage.getItem(K.theme) || 'light';
+  let auth = null, db = null, user = null, prevTab = 'p_daily';
+  let mktFilter = 'daily', selectedEmpId = null;
+  const chartInstances = {}, chartCfg = {};
+
+  const defData = () => ({
+    profile: { name:'গেস্ট ব্যবহারকারী', photo:'' },
+    mode: 'personal',
+    activeBizId: 'biz_1',
+    showEventTab: false,
+    limits: { weekly:0, monthly:0, yearly:0 },
+    bizAccounts: [{ id:'biz_1', name:'আমার ব্যবসা' }],
+    daily: [], savings: [], bazar: [],
+    events: { 'পিকনিক ২০২৬':[] },
+    bizDaily: [], bizDues: [], bizSavings: [],
+    employees: [], bizStaff: []
+  });
+  let data = { ...defData(), ...(JSON.parse(localStorage.getItem(K.guest)) || {}) };
+  if (!data.limits) data.limits = { weekly:0, monthly:0, yearly:0 };
+  if (!data.employees) data.employees = [];
+  let curTab = data.mode === 'business' ? 'b_daily' : 'p_daily';
+
+  const $ = id => document.getElementById(id);
+  const t = k => I18N[lang][k] || k;
+  const fmt = n => '৳ ' + Number(n||0).toLocaleString(lang==='bn'?'bn-BD':'en-US');
+  const toast = m => { const el=$('toast'); el.innerText=m; el.style.display='block'; clearTimeout(window._tm); window._tm=setTimeout(()=>el.style.display='none',2200); };
+
+  function openDlg({ title, html, onOk }) {
+    $('dlgT').innerText = title;
+    $('dlgBody').innerHTML = html;
+    $('dlgModal').style.display = 'flex';
+    $('dlgNo').onclick = () => $('dlgModal').style.display = 'none';
+    $('dlgYes').onclick = () => { if (onOk() !== false) $('dlgModal').style.display = 'none'; };
+  }
+  const simpleDlg = (title, val, cb) => openDlg({
+    title, html: `<input type="text" id="dlgIn" value="${val}" />`,
+    onOk: () => cb($('dlgIn').value.trim())
+  });
+
+  // Theme & Language
+  window.setTheme = th => {
+    theme = th; localStorage.setItem(K.theme, th);
+    const sysD = window.matchMedia('(prefers-color-scheme:dark)').matches;
+    document.body.classList.toggle('dark', th==='dark' || (th==='system' && sysD));
+    ['light','dark','system'].forEach(x => $('th-'+x).classList.toggle('active', th===x));
+    renderAllCharts();
+  };
+  window.cycleTheme = () => setTheme(theme==='light'?'dark':theme==='dark'?'system':'light');
+  window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change', () => { if(theme==='system') setTheme('system'); });
+
+  window.setLang = l => {
+    lang = l; localStorage.setItem(K.lang, l);
+    document.querySelectorAll('[data-i18n]').forEach(el => el.innerText = t(el.dataset.i18n));
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = t(el.dataset.i18nPh));
+    $('l-bn').classList.toggle('active', l==='bn');
+    $('l-en').classList.toggle('active', l==='en');
+    renderModeTabs();
+    renderAll();
+  };
+
+  // Welcome & Session
+  if (localStorage.getItem(K.sess)) $('welcome').style.display = 'none';
+  window.enterGuest = () => {
+    localStorage.setItem(K.sess, 'guest'); $('welcome').style.display = 'none';
+    data = { ...defData(), ...(JSON.parse(localStorage.getItem(K.guest)) || {}) };
+    curTab = data.mode === 'business' ? 'b_daily' : 'p_daily';
+    renderModeTabs(); go(curTab); renderAll();
+  };
+
+  // Sync & Save
+  function setSync(k, ok) { $('syncBadgeText').innerText = t(k); $('sDot').className = 'sync-dot' + (ok?' ok':''); }
+  async function save() {
+    if (user && db) {
+      localStorage.setItem(K.cloud, JSON.stringify(data));
+      if (navigator.onLine) {
+        try { setSync('syncing',false); await setDoc(doc(db,'users',user.uid,'backup','data'), { ...data, updatedAt:Date.now() }); setSync('synced',true); }
+        catch { setSync('offline',false); }
+      } else setSync('offline',false);
+    } else {
+      localStorage.setItem(K.guest, JSON.stringify(data)); setSync('offline',false);
+    }
+    renderAll();
+  }
+  window.addEventListener('online', () => { if(user) save(); });
+  window.addEventListener('offline', () => setSync('offline',false));
+
+  // Firebase Auth
+  if (firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('YOUR_')) {
+    try {
+      const app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
+      getRedirectResult(auth).catch(()=>{});
+      onAuthStateChanged(auth, async u => {
+        user = u;
+        if (u) {
+          localStorage.setItem(K.sess, 'google'); $('welcome').style.display = 'none';
+          const gst = JSON.parse(localStorage.getItem(K.guest));
+          const hasG = gst && ((gst.daily?.length||0)+(gst.savings?.length||0)+(gst.bazar?.length||0)+(gst.bizDaily?.length||0) > 0);
+          try {
+            const snap = await getDoc(doc(db,'users',u.uid,'backup','data'));
+            let cld = { ...defData(), ...(snap.exists() ? snap.data() : {}) };
+            if (hasG) {
+              ['daily','savings','bazar','bizDaily','bizDues','bizSavings','employees','bizStaff'].forEach(k => { cld[k] = [...(cld[k]||[]), ...(gst[k]||[])]; });
+              localStorage.removeItem(K.guest); data = cld; await save();
+              toast(lang==='bn'?'গেস্ট হিসাব ক্লাউডে যুক্ত হয়েছে':'Guest data merged');
+            } else { data = cld; localStorage.setItem(K.cloud, JSON.stringify(data)); setSync('synced',true); }
+          } catch { data = { ...defData(), ...(JSON.parse(localStorage.getItem(K.cloud)) || gst || {}) }; setSync('offline',false); }
+        } else { data = { ...defData(), ...(JSON.parse(localStorage.getItem(K.guest)) || {}) }; }
+        curTab = data.mode === 'business' ? 'b_daily' : 'p_daily';
+        renderModeTabs(); go(curTab); renderAll();
+      });
+    } catch {}
+  }
+
+  window.googleLogin = async () => {
+    if (!auth) return toast(lang==='bn'?'Firebase Config যুক্ত করুন':'Add Firebase Config');
+    const p = new GoogleAuthProvider();
+    try { await signInWithPopup(auth, p); }
+    catch (e) { if (e.code==='auth/popup-blocked' || /wv|Android/i.test(navigator.userAgent)) await signInWithRedirect(auth, p); else toast(e.message); }
+  };
+  window.googleLogout = async () => { if(auth) await signOut(auth); localStorage.setItem(K.sess,'guest'); };
+
+  // Dynamic Mode Tabs (Vault icon used for Savings)
+  function renderModeTabs() {
+    const pTabs = [
+      { id:'p_daily', ic:'wallet', lbl:t('pDaily') },
+      { id:'p_sav', ic:'vault', lbl:t('pSav') },
+      { id:'p_mkt', ic:'bag', lbl:t('pMkt') },
+      { id:'p_calc', ic:'calc', lbl:t('pCalc') }
+    ];
+    if (data.showEventTab) pTabs.push({ id:'p_ev', ic:'sparkles', lbl:t('pEv') });
+
+    const bTabs = [
+      { id:'b_daily', ic:'chart', lbl:t('bDaily') },
+      { id:'b_due', ic:'swap', lbl:t('bDue') },
+      { id:'b_sav', ic:'safe', lbl:t('bSav') },
+      { id:'b_staff', ic:'users', lbl:t('bStaff') }
+    ];
+    const list = data.mode === 'business' ? bTabs : pTabs;
+    $('modeTabs').innerHTML = list.map(tb =>
+      `<button class="t-btn ${curTab===tb.id?'active':''}" onclick="go('${tb.id}')">${svg(tb.ic)}<span>${tb.lbl}</span></button>`
+    ).join('');
+  }
+
+  window.go = tab => {
+    if (tab !== 'prof') prevTab = tab;
+    curTab = tab;
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    const el = $('tab-'+tab); if (el) el.classList.add('active');
+    renderModeTabs();
+    $('fabMenu').style.display = 'none';
+    $('fabBtn').style.display = (tab==='p_calc' || tab==='prof') ? 'none' : 'grid';
+    renderAllCharts();
+  };
+  window.openProfile = () => go('prof');
+  window.closeProfile = () => go(prevTab || (data.mode==='business'?'b_daily':'p_daily'));
+
+  // FAB & Optional Event Tab Toggle
+  window.onFabClick = () => {
+    if (data.mode === 'personal') {
+      const m = $('fabMenu');
+      $('evMenuTxt').innerText = data.showEventTab ? t('remEvTab') : t('addEvTab');
+      m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+    } else focusFirstInput();
+  };
+  window.fabAction = act => {
+    $('fabMenu').style.display = 'none';
+    if (act === 'focus') focusFirstInput();
+    else if (act === 'toggleEv') toggleEvTab(!data.showEventTab);
+  };
+  window.toggleEvTab = show => {
+    data.showEventTab = show;
+    if (!show && curTab === 'p_ev') curTab = 'p_daily';
+    if (show) curTab = 'p_ev';
+    save(); go(curTab);
+  };
+  function focusFirstInput() {
+    const map = { p_daily:'dAmt', p_sav:'sAmt', p_mkt:'mItem', p_ev:'eAmt', b_daily:'bdAmt', b_due:'duAmt', b_sav:'bsAmt', b_staff:'stAmt' };
+    const el = $(map[curTab]); if (el) { el.scrollIntoView({behavior:'smooth',block:'center'}); el.focus(); }
+  }
+
+  // Date Helpers
+  const today = new Date().toISOString().split('T')[0];
+  ['dDate','sDate','mDate','bdDate','duDate','bsDate','stDate'].forEach(id => $(id).value = today);
+  const inPeriod = (dt, p) => {
+    if (!dt) return false;
+    const now = new Date();
+    if (p === 'daily') return dt === today;
+    if (p === 'weekly') {
+      const d = new Date(dt + 'T00:00:00'), diff = (now - d) / 86400000;
+      return diff >= -1 && diff < 7;
+    }
+    if (p === 'monthly') return dt.slice(0,7) === today.slice(0,7);
+    if (p === 'yearly') return dt.slice(0,4) === today.slice(0,4);
+    return true;
+  };
+
+  // ================= INTERACTIVE CHART.JS ENGINE =================
+  window.setChartOpt = (key, prop, val) => {
+    if (!chartCfg[key]) chartCfg[key] = { period:'daily', mode:'compare', single:'in' };
+    chartCfg[key][prop] = val;
+    renderTabChart(key);
+  };
+
+  function getSeries(key, period) {
+    const bId = data.activeBizId;
+    const isStaffCh = key === 'b_staff' || key === 'emp_detail';
+    let items = [], inFn = () => false, outFn = () => false, valFn = x => Number(x.amount||0);
+
+    if (key === 'p_daily') {
+      const mktExp = data.bazar.filter(b => b.deductSalary).map(b => ({ type:'expense', amount:b.amount, date:b.date }));
+      items = [...data.daily, ...mktExp];
+      inFn = x => x.type==='income'; outFn = x => x.type==='expense';
+    }
+    else if (key === 'p_sav') { items = data.savings; inFn = x => x.type==='deposit'; outFn = x => x.type==='spend'; }
+    else if (key === 'p_mkt') { items = data.bazar; inFn = () => false; outFn = () => true; }
+    else if (key === 'b_daily') { items = data.bizDaily.filter(x=>x.bizId===bId); inFn = x => x.type==='income'; outFn = x => x.type==='expense'; }
+    else if (key === 'b_due') { items = data.bizDues.filter(x=>x.bizId===bId); inFn = x => x.type==='receivable'; outFn = x => x.type==='payable'; }
+    else if (isStaffCh) {
+      items = data.bizStaff.filter(x => x.bizId===bId && (key==='b_staff' || x.empId===selectedEmpId));
+    }
+
+    const buckets = [], now = new Date();
+    const makeB = (k, lbl) => ({ key:k, lbl, inc:0, exp:0, cr:0, pd:0, adv:0 });
+    if (period === 'daily') {
+      for (let i=6; i>=0; i--) {
+        const d = new Date(now); d.setDate(now.getDate()-i);
+        const iso = d.toISOString().split('T')[0];
+        buckets.push(makeB(iso, iso.slice(5)));
+      }
+    } else if (period === 'monthly') {
+      for (let i=5; i>=0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+        const ym = d.toISOString().slice(0,7);
+        buckets.push(makeB(ym, ym));
+      }
+    } else {
+      for (let i=3; i>=0; i--) {
+        const yr = String(now.getFullYear()-i);
+        buckets.push(makeB(yr, yr));
+      }
+    }
+
+    items.forEach(x => {
+      const b = buckets.find(k => period==='daily' ? k.key===x.date : (x.date && x.date.startsWith(k.key)));
+      if (!b) return;
+      const v = valFn(x);
+      if (isStaffCh) {
+        if (x.type === 'credit') b.cr += v;
+        else if (x.type === 'advance') b.adv += v;
+        else b.pd += v;
+      } else {
+        if (inFn(x)) b.inc += v;
+        if (outFn(x)) b.exp += v;
+      }
+    });
+    return buckets;
+  }
+
+  function renderTabChart(key) {
+    const host = $('chart-' + key);
+    if (!host || typeof Chart === 'undefined') return;
+    if (!chartCfg[key]) chartCfg[key] = { period:'daily', mode:'compare', single:'in' };
+    const cfg = chartCfg[key];
+    const isMkt = key === 'p_mkt';
+    const isStaffCh = key === 'b_staff' || key === 'emp_detail';
+    if (isMkt) { cfg.mode = 'single'; cfg.single = 'out'; }
+
+    const lblMap = {
+      p_daily: [t('inc'), t('exp')], p_sav: [t('sDep'), t('sSpd')], p_mkt: ['', t('pMkt')],
+      b_daily: [t('bIn'), t('bOut')], b_due: [t('rec'), t('pay')]
+    };
+    const [inLbl, outLbl] = lblMap[key] || [t('inc'), t('exp')];
+
+    const modePills = isMkt ? '' : isStaffCh
+      ? `<div class="pills">
+          <button class="${cfg.mode==='compare'?'active':''}" onclick="setChartOpt('${key}','mode','compare')">${t('chComp')}</button>
+          <button class="${cfg.mode==='single'&&cfg.single==='cr'?'active':''}" onclick="setChartOpt('${key}','mode','single');setChartOpt('${key}','single','cr')">${t('stCrTot')}</button>
+          <button class="${cfg.mode==='single'&&cfg.single==='pd'?'active':''}" onclick="setChartOpt('${key}','mode','single');setChartOpt('${key}','single','pd')">${t('stPdTot')}</button>
+          <button class="${cfg.mode==='single'&&cfg.single==='adv'?'active':''}" onclick="setChartOpt('${key}','mode','single');setChartOpt('${key}','single','adv')">${t('stAdvTot')}</button>
+        </div>`
+      : `<div class="pills">
+          <button class="${cfg.mode==='compare'?'active':''}" onclick="setChartOpt('${key}','mode','compare')">${t('chComp')}</button>
+          <button class="${cfg.mode==='single'&&cfg.single==='in'?'active':''}" onclick="setChartOpt('${key}','mode','single');setChartOpt('${key}','single','in')">${inLbl}</button>
+          <button class="${cfg.mode==='single'&&cfg.single==='out'?'active':''}" onclick="setChartOpt('${key}','mode','single');setChartOpt('${key}','single','out')">${outLbl}</button>
+        </div>`;
+
+    host.innerHTML = `<div class="ch-card">
+      <div class="ch-bar">
+        <div class="pills">
+          <button class="${cfg.period==='daily'?'active':''}" onclick="setChartOpt('${key}','period','daily')">${t('fDaily')}</button>
+          <button class="${cfg.period==='monthly'?'active':''}" onclick="setChartOpt('${key}','period','monthly')">${t('fMonthly')}</button>
+          <button class="${cfg.period==='yearly'?'active':''}" onclick="setChartOpt('${key}','period','yearly')">${t('fYearly')}</button>
+        </div>
+        ${modePills}
+      </div>
+      <div class="ch-wrap"><canvas id="cv-${key}"></canvas></div>
+    </div>`;
+
+    const buckets = getSeries(key, cfg.period);
+    const isDark = document.body.classList.contains('dark');
+    const gridCol = isDark ? 'rgba(148,163,184,0.12)' : 'rgba(15,23,42,0.07)';
+    const txtCol = isDark ? '#94a3b8' : '#64748b';
+    const datasets = [];
+    if (isStaffCh) {
+      if (cfg.mode === 'compare') {
+        datasets.push({ label:t('stCrTot'), data:buckets.map(b=>b.cr), backgroundColor:'#16a34a', borderRadius:4, barPercentage:0.8 });
+        datasets.push({ label:t('stPdTot'), data:buckets.map(b=>b.pd), backgroundColor:'#dc2626', borderRadius:4, barPercentage:0.8 });
+        datasets.push({ label:t('stAdvTot'), data:buckets.map(b=>b.adv), backgroundColor:'#d97706', borderRadius:4, barPercentage:0.8 });
+      } else if (cfg.single === 'cr') {
+        datasets.push({ label:t('stCrTot'), data:buckets.map(b=>b.cr), backgroundColor:'#16a34a', borderRadius:6, barPercentage:0.55 });
+      } else if (cfg.single === 'adv') {
+        datasets.push({ label:t('stAdvTot'), data:buckets.map(b=>b.adv), backgroundColor:'#d97706', borderRadius:6, barPercentage:0.55 });
+      } else {
+        datasets.push({ label:t('stPdTot'), data:buckets.map(b=>b.pd), backgroundColor:'#dc2626', borderRadius:6, barPercentage:0.55 });
+      }
+    } else if (cfg.mode === 'compare') {
+      datasets.push({ label:inLbl, data:buckets.map(b=>b.inc), backgroundColor:'#16a34a', borderRadius:5, barPercentage:0.75 });
+      datasets.push({ label:outLbl, data:buckets.map(b=>b.exp), backgroundColor:'#dc2626', borderRadius:5, barPercentage:0.75 });
+    } else if (cfg.single === 'in') {
+      datasets.push({ label:inLbl, data:buckets.map(b=>b.inc), backgroundColor:'#16a34a', borderRadius:6, barPercentage:0.55 });
+    } else {
+      datasets.push({ label:outLbl, data:buckets.map(b=>b.exp), backgroundColor:'#dc2626', borderRadius:6, barPercentage:0.55 });
+    }
+
+    if (chartInstances[key]) chartInstances[key].destroy();
+    chartInstances[key] = new Chart($('cv-' + key), {
+      type: 'bar',
+      data: { labels: buckets.map(b => b.lbl), datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: cfg.mode==='compare', labels: { color: txtCol, boxWidth: 10, font: { size: 10 } } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: txtCol, font: { size: 10 } } },
+          y: { grid: { color: gridCol }, ticks: { color: txtCol, font: { size: 10 }, maxTicksLimit: 4 }, beginAtZero: true }
+        }
+      }
+    });
+  }
+  function renderAllCharts() {
+    ['p_daily','p_sav','p_mkt','b_daily','b_due','b_staff'].forEach(renderTabChart);
+    if (selectedEmpId) renderTabChart('emp_detail');
+  }
+
+  // ================= PERSONAL ACTIONS =================
+  window.addSalaryDlg = () => openDlg({
+    title: t('salDlgTitle'),
+    html: `<div class="fg"><label>${t('amt')}</label><input type="number" id="salInAmt" placeholder="0" /></div>
+           <div class="fg"><label>${t('note')}</label><input type="text" id="salInNote" value="${lang==='bn'?'মাসিক বেতন':'Monthly Salary'}" /></div>
+           <div class="fg" style="margin-bottom:0;"><label>${t('date')}</label><input type="date" id="salInDate" value="${today}" /></div>`,
+    onOk: () => {
+      const amt = parseFloat($('salInAmt').value); if (!amt || amt <= 0) return false;
+      data.daily.unshift({ id:Date.now(), type:'income', isSalary:true, amount:amt, note:$('salInNote').value.trim()||(lang==='bn'?'বেতন':'Salary'), date:$('salInDate').value||today });
+      save();
+    }
+  });
+
+  window.setLimitsDlg = () => openDlg({
+    title: t('limDlgTitle'),
+    html: `<div class="fg"><label>${t('limW')}</label><input type="number" id="limInW" value="${data.limits.weekly||''}" placeholder="0" /></div>
+           <div class="fg"><label>${t('limM')}</label><input type="number" id="limInM" value="${data.limits.monthly||''}" placeholder="0" /></div>
+           <div class="fg" style="margin-bottom:0;"><label>${t('limY')}</label><input type="number" id="limInY" value="${data.limits.yearly||''}" placeholder="0" /></div>`,
+    onOk: () => {
+      data.limits = {
+        weekly: Math.max(0, parseFloat($('limInW').value)||0),
+        monthly: Math.max(0, parseFloat($('limInM').value)||0),
+        yearly: Math.max(0, parseFloat($('limInY').value)||0)
+      };
+      save();
+    }
+  });
+
+  window.addDaily = () => {
+    const amt = parseFloat($('dAmt').value); if(!amt||amt<=0) return;
+    data.daily.unshift({ id:Date.now(), type:$('dType').value, amount:amt, note:$('dNote').value.trim()||($('dType').value==='income'?t('optInc'):t('optExp')), date:$('dDate').value||today });
+    $('dAmt').value=''; $('dNote').value=''; save();
+  };
+  window.delDaily = id => { data.daily=data.daily.filter(x=>x.id!==id); save(); };
+
+  window.addSav = () => {
+    const amt = parseFloat($('sAmt').value); if(!amt||amt<=0) return;
+    data.savings.unshift({ id:Date.now(), type:$('sType').value, amount:amt, note:$('sNote').value.trim()||($('sType').value==='deposit'?t('optDep'):t('optSpd')), date:$('sDate').value||today });
+    $('sAmt').value=''; $('sNote').value=''; save();
+  };
+  window.delSav = id => { data.savings=data.savings.filter(x=>x.id!==id); save(); };
+
+  window.setMktFilter = f => {
+    mktFilter = f;
+    ['daily','weekly','monthly'].forEach(x => $('mf-'+x).classList.toggle('active', x===f));
+    renderAll();
+  };
+  window.addMkt = () => {
+    const item = $('mItem').value.trim(), amt = parseFloat($('mAmt').value); if(!item||!amt||amt<=0) return;
+    const deductSalary = $('mDeduct').checked;
+    data.bazar.unshift({ id:Date.now(), item, amount:amt, qty:$('mQty').value.trim(), date:$('mDate').value||today, deductSalary });
+    $('mItem').value=''; $('mAmt').value=''; $('mQty').value=''; save();
+  };
+  window.delMkt = id => {
+    const target = data.bazar.find(x => x.id === id);
+    data.bazar = data.bazar.filter(x => x.id !== id);
+    save();
+    if (target && target.deductSalary) toast(lang==='bn'?'বেতন/ব্যালেন্সে ফেরত যোগ হয়েছে':'Refunded to Salary/Balance');
+  };
+
+  // Calculator
+  let exp = '';
+  window.cAdd = v => { exp += (v==='%'?'/100':v); $('cVal').innerText = exp||'0'; };
+  window.cClr = () => { exp=''; $('cHis').innerText=''; $('cVal').innerText='0'; };
+  window.cDel = () => { exp=exp.slice(0,-1); $('cVal').innerText=exp||'0'; };
+  window.cEq = () => {
+    try { if(!exp)return; $('cHis').innerText=exp; const r=Function('"use strict";return('+exp+')')(); exp=Number.isInteger(r)?String(r):String(+r.toFixed(2)); $('cVal').innerText=exp; }
+    catch { $('cVal').innerText='Error'; exp=''; }
+  };
+  window.sendDaily = type => {
+    cEq(); const v=parseFloat($('cVal').innerText); if(!v||v<=0)return;
+    $('dType').value=type; $('dAmt').value=v; go('p_daily');
+  };
+
+  // Events
+  window.newEvDlg = () => simpleDlg(t('newEvTitle'), '', v => { if(v){ if(!data.events[v]) data.events[v]=[]; save(); $('evSel').value=v; renderEv(); } });
+  window.addEv = () => {
+    const ev=$('evSel').value, amt=parseFloat($('eAmt').value); if(!ev||!amt||amt<=0)return;
+    data.events[ev].unshift({ id:Date.now(), type:$('eType').value, amount:amt, note:$('eNote').value.trim()||t('pEv') });
+    $('eAmt').value=''; $('eNote').value=''; save();
+  };
+  window.delEvItem = id => { const ev=$('evSel').value; data.events[ev]=data.events[ev].filter(x=>x.id!==id); save(); };
+  window.delEv = () => { const ks=Object.keys(data.events); if(ks.length>1){ delete data.events[$('evSel').value]; save(); } };
+
+  // ================= BUSINESS ACTIONS =================
+  window.addBizDaily = () => {
+    const amt = parseFloat($('bdAmt').value); if(!amt||amt<=0) return;
+    data.bizDaily.unshift({ id:Date.now(), bizId:data.activeBizId, type:$('bdType').value, amount:amt, note:$('bdNote').value.trim()||t('bDaily'), date:$('bdDate').value||today });
+    $('bdAmt').value=''; $('bdNote').value=''; save();
+  };
+  window.delBizDaily = id => { data.bizDaily=data.bizDaily.filter(x=>x.id!==id); save(); };
+
+  window.addBizDue = () => {
+    const amt = parseFloat($('duAmt').value), party = $('duParty').value.trim(); if(!amt||amt<=0||!party) return;
+    data.bizDues.unshift({ id:Date.now(), bizId:data.activeBizId, type:$('duType').value, party, amount:amt, settled:false, date:$('duDate').value||today });
+    $('duAmt').value=''; $('duParty').value=''; save();
+  };
+  window.settleDue = id => { const x=data.bizDues.find(i=>i.id===id); if(x){ x.settled=true; save(); } };
+  window.delBizDue = id => { data.bizDues=data.bizDues.filter(x=>x.id!==id); save(); };
+
+  window.addBizSav = () => {
+    const amt = parseFloat($('bsAmt').value); if(!amt||amt<=0) return;
+    data.bizSavings.unshift({ id:Date.now(), bizId:data.activeBizId, type:$('bsType').value, amount:amt, note:$('bsNote').value.trim()||t('bSav'), date:$('bsDate').value||today });
+    $('bsAmt').value=''; $('bsNote').value=''; save();
+  };
+  window.delBizSav = id => { data.bizSavings=data.bizSavings.filter(x=>x.id!==id); save(); };
+
+  // Advanced Employee Management
+  window.openAddEmpModal = () => openDlg({
+    title: t('empDlgTitle'),
+    html: `<div class="fg"><label>${t('stName')}</label><input type="text" id="empInName" placeholder="${t('stName')}" /></div>
+           <div class="fg"><label>${t('type')}</label><select id="empInCycle"><option value="daily">${t('payDaily')}</option><option value="weekly">${t('payWeekly')}</option><option value="monthly" selected>${t('payMonthly')}</option></select></div>
+           <div class="fg" style="margin-bottom:0;"><label>${t('amt')} (Rate)</label><input type="number" id="empInRate" placeholder="0" /></div>`,
+    onOk: () => {
+      const name = $('empInName').value.trim(), rate = parseFloat($('empInRate').value)||0;
+      if (!name) return false;
+      data.employees.push({ id:'emp_'+Date.now(), bizId:data.activeBizId, name, cycle:$('empInCycle').value, rate });
+      save();
+    }
+  });
+
+  window.addBizStaff = () => {
+    const empId = $('stEmpSel').value, amt = parseFloat($('stAmt').value);
+    if (!empId || !amt || amt <= 0) return;
+    const emp = data.employees.find(e => e.id === empId);
+    const type = $('stType').value, date = $('stDate').value || today, note = $('stNote').value.trim();
+    const txId = Date.now();
+    let bizDailyId = null;
+
+    if ((type === 'paid' || type === 'advance') && $('stToCashbook').checked) {
+      bizDailyId = txId + 1;
+      const tagTxt = type === 'advance' ? t('stAdvTot') : t('stPdTot');
+      data.bizDaily.unshift({
+        id: bizDailyId, bizId: data.activeBizId, type: 'expense', amount: amt,
+        note: `${emp ? emp.name : ''} (${tagTxt})${note ? ' - ' + note : ''}`, date
+      });
+    }
+
+    data.bizStaff.unshift({
+      id: txId, bizId: data.activeBizId, empId, name: emp ? emp.name : '',
+      type, amount: amt, note, date, bizDailyId
+    });
+    $('stAmt').value=''; $('stNote').value=''; save();
+  };
+  window.delBizStaff = id => {
+    const entry = data.bizStaff.find(x => x.id === id);
+    if (entry && entry.bizDailyId) {
+      data.bizDaily = data.bizDaily.filter(d => d.id !== entry.bizDailyId);
+    }
+    data.bizStaff = data.bizStaff.filter(x => x.id !== id);
+    save();
+  };
+
+  window.openEmpDetail = id => {
+    selectedEmpId = id;
+    $('staffOverview').style.display = 'none';
+    $('staffDetail').style.display = 'block';
+    renderEmpDetail();
+  };
+  window.closeEmpDetail = () => {
+    selectedEmpId = null;
+    $('staffDetail').style.display = 'none';
+    $('staffOverview').style.display = 'block';
+    renderTabChart('b_staff');
+  };
+  function empStats(txs) {
+    let cr = 0, pd = 0, adv = 0;
+    txs.forEach(x => {
+      if (x.type === 'credit') cr += x.amount;
+      else if (x.type === 'advance') adv += x.amount;
+      else pd += x.amount;
+    });
+    return { cr, pd, adv, net: cr - (pd + adv) };
+  }
+  function renderEmpDetail() {
+    if (!selectedEmpId) return;
+    const emp = data.employees.find(e => e.id === selectedEmpId);
+    if (!emp) return closeEmpDetail();
+    const cycLbl = emp.cycle==='daily' ? t('payDaily') : emp.cycle==='weekly' ? t('payWeekly') : t('payMonthly');
+    $('empProfileCard').innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="it-ic bg-b">${svg('user')}</span>
+        <div><h3 style="font-size:.95rem;">${emp.name}</h3><small style="color:var(--mut);">${cycLbl} • ${fmt(emp.rate)}</small></div>
+      </div>
+      <span class="tag t-cash">${cycLbl}</span>
+    </div>`;
+    $('delEmpBtn').onclick = () => {
+      const removed = data.bizStaff.filter(x => x.empId === emp.id && x.bizDailyId).map(x => x.bizDailyId);
+      if (removed.length) data.bizDaily = data.bizDaily.filter(d => !removed.includes(d.id));
+      data.employees = data.employees.filter(e => e.id !== emp.id);
+      data.bizStaff = data.bizStaff.filter(x => x.empId !== emp.id);
+      closeEmpDetail(); save();
+    };
+
+    const txs = data.bizStaff.filter(x => x.bizId===data.activeBizId && x.empId===emp.id);
+    const allSt = empStats(txs);
+    $('empTotCr').innerText = fmt(allSt.cr);
+    $('empTotPd').innerText = fmt(allSt.pd);
+    $('empTotAdv').innerText = fmt(allSt.adv);
+    $('empTotNet').innerText = fmt(allSt.net);
+    $('empTotNet').className = allSt.net < 0 ? 'r' : 'b';
+
+    const w = empStats(txs.filter(x => inPeriod(x.date, 'weekly')));
+    const m = empStats(txs.filter(x => inPeriod(x.date, 'monthly')));
+    const y = empStats(txs.filter(x => inPeriod(x.date, 'yearly')));
+    $('empWNet').innerText = fmt(w.net); $('empWSub').innerText = `+${fmt(w.cr)} / -${fmt(w.pd+w.adv)}`;
+    $('empMNet').innerText = fmt(m.net); $('empMSub').innerText = `+${fmt(m.cr)} / -${fmt(m.pd+m.adv)}`;
+    $('empYNet').innerText = fmt(y.net); $('empYSub').innerText = `+${fmt(y.cr)} / -${fmt(y.pd+y.adv)}`;
+
+    $('empTxList').innerHTML = txs.length ? txs.map(i => {
+      const isCr = i.type==='credit', isAdv = i.type==='advance';
+      const lbl = isCr ? t('optStCr') : isAdv ? t('optStAdv') : t('optStPd');
+      return `<div class="item"><div class="item-l"><span class="it-ic ${isCr?'bg-g':isAdv?'bg-a':'bg-r'}">${svg(isCr?'arrowDown':isAdv?'swap':'arrowUp','sm')}</span><div><h4>${lbl}${i.note?` • ${i.note}`:''}</h4><small>${i.date}</small></div></div><div class="item-r"><b class="${isCr?'g':isAdv?'a':'r'}">${isCr?'+':'-'}${fmt(i.amount)}</b><button class="mini del" onclick="delBizStaff(${i.id})">${svg('trash','sm')}</button></div></div>`;
+    }).join('') : emptyHtml();
+
+    renderTabChart('emp_detail');
+  }
+
+  // ================= ACCOUNT SWITCHING & PROFILE =================
+  window.switchPersonal = () => { data.mode = 'personal'; save(); go('p_daily'); };
+  window.switchBizAcc = id => { data.mode = 'business'; data.activeBizId = id; selectedEmpId = null; save(); go('b_daily'); };
+  window.newBizAccDlg = () => simpleDlg(t('newBizTitle'), '', v => {
+    if(v){ const id='biz_'+Date.now(); data.bizAccounts.push({id,name:v}); data.mode='business'; data.activeBizId=id; save(); go('b_daily'); }
+  });
+  window.delBizAcc = (e,id) => {
+    e.stopPropagation(); if(data.bizAccounts.length<=1) return;
+    data.bizAccounts = data.bizAccounts.filter(x=>x.id!==id);
+    ['bizDaily','bizDues','bizSavings','employees','bizStaff'].forEach(k => data[k]=data[k].filter(x=>x.bizId!==id));
+    if(data.activeBizId===id) data.activeBizId = data.bizAccounts[0].id;
+    save();
+  };
+  window.editNameDlg = () => simpleDlg(t('editNameTitle'), data.profile?.name||'', v => { if(v){ data.profile.name=v; save(); } });
+  window.uploadPic = e => {
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas'); c.width=120; c.height=120;
+        const s = Math.min(img.width, img.height);
+        c.getContext('2d').drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, 120, 120);
+        data.profile.photo = c.toDataURL('image/jpeg', 0.75); save();
+      };
+      img.src = ev.target.result;
+    };
+    r.readAsDataURL(f); e.target.value='';
+  };
+
+  // ================= RENDERERS =================
+  const emptyHtml = () => `<div class="empty">${svg('inbox')}<span>${t('noData')}</span></div>`;
+
+  window.renderEv = () => {
+    const ks = Object.keys(data.events || {});
+    if (!ks.length) data.events = { 'পিকনিক ২০২৬':[] };
+    const sel = $('evSel'), cur = sel.value && data.events[sel.value] ? sel.value : Object.keys(data.events)[0];
+    sel.innerHTML = Object.keys(data.events).map(k => `<option value="${k}" ${k===cur?'selected':''}>${k}</option>`).join('');
+    let ef = 0, ec = 0;
+    const list = data.events[cur] || [];
+    $('eList').innerHTML = list.length ? list.map(i => {
+      const f = i.type === 'fund'; f ? ef += i.amount : ec += i.amount;
+      return `<div class="item"><div class="item-l"><span class="it-ic ${f?'bg-g':'bg-r'}">${svg(f?'arrowDown':'arrowUp','sm')}</span><div><h4>${i.note}</h4></div></div><div class="item-r"><b class="${f?'g':'r'}">${f?'+':'-'}${fmt(i.amount)}</b><button class="mini del" onclick="delEvItem(${i.id})">${svg('trash','sm')}</button></div></div>`;
+    }).join('') : emptyHtml();
+    $('eFund').innerText = fmt(ef); $('eCost').innerText = fmt(ec); $('eBal').innerText = fmt(ef - ec);
+  };
+
+  function renderAll() {
+    const curBiz = data.bizAccounts.find(x => x.id === data.activeBizId) || data.bizAccounts[0];
+    $('activeAccBadge').innerText = data.mode === 'business' ? (curBiz?.name || 'Business') : t('personalAcc');
+
+    // Personal 1: Daily + Salary + Limits (Includes deducted Bazar entries)
+    let di=0, do_=0, salTot=0, lastDt='';
+    let wExp=0, mExp=0, yExp=0;
+    const deductedBazar = data.bazar.filter(b => b.deductSalary);
+    deductedBazar.forEach(b => {
+      do_ += b.amount;
+      if (inPeriod(b.date,'weekly')) wExp += b.amount;
+      if (inPeriod(b.date,'monthly')) mExp += b.amount;
+      if (inPeriod(b.date,'yearly')) yExp += b.amount;
+    });
+
+    const combinedDaily = [
+      ...data.daily.map(i => ({ ...i, _src:'daily' })),
+      ...deductedBazar.map(b => ({ id:b.id, type:'expense', amount:b.amount, note:`${t('pMkt')}: ${b.item}`, date:b.date, _src:'bazar' }))
+    ].sort((a,b) => (b.date||'').localeCompare(a.date||'') || b.id - a.id);
+
+    $('dList').innerHTML = combinedDaily.length ? combinedDaily.map(i => {
+      const inc = i.type==='income';
+      if (i._src === 'daily') {
+        if (inc) { di+=i.amount; if(i.isSalary) salTot+=i.amount; }
+        else {
+          do_+=i.amount;
+          if (inPeriod(i.date,'weekly')) wExp+=i.amount;
+          if (inPeriod(i.date,'monthly')) mExp+=i.amount;
+          if (inPeriod(i.date,'yearly')) yExp+=i.amount;
+        }
+      }
+      const hdr = i.date !== lastDt ? `<div class="dt-grp">${svg('cal','sm')}<span>${lastDt=i.date}</span></div>` : '';
+      const delFn = i._src==='bazar' ? `delMkt(${i.id})` : `delDaily(${i.id})`;
+      const tagHtml = i.isSalary ? `<span class="tag t-cash">Salary</span>` : (i._src==='bazar' ? `<span class="tag t-due">${t('pMkt')}</span>` : '');
+      return `${hdr}<div class="item"><div class="item-l"><span class="it-ic ${inc?'bg-g':'bg-r'}">${svg(inc?'arrowDown':'arrowUp','sm')}</span><div><h4>${i.note}${tagHtml}</h4></div></div><div class="item-r"><b class="${inc?'g':'r'}">${inc?'+':'-'}${fmt(i.amount)}</b><button class="mini del" onclick="${delFn}">${svg('trash','sm')}</button></div></div>`;
+    }).join('') : emptyHtml();
+    $('dIn').innerText=fmt(di); $('dOut').innerText=fmt(do_); $('dBal').innerText=fmt(di-do_);
+
+    const baseSal = salTot || di;
+    $('salTotVal').innerText = fmt(baseSal);
+    $('salRemVal').innerText = fmt(baseSal - do_);
+    const salPct = baseSal > 0 ? Math.min(100, Math.round((do_/baseSal)*100)) : 0;
+    $('salProg').style.width = salPct + '%';
+    $('salProg').style.background = salPct >= 90 ? 'var(--red)' : salPct >= 75 ? 'var(--amb)' : 'var(--grn)';
+
+    const limRows = [
+      { lbl:t('limW'), lim:data.limits.weekly, sp:wExp },
+      { lbl:t('limM'), lim:data.limits.monthly, sp:mExp },
+      { lbl:t('limY'), lim:data.limits.yearly, sp:yExp }
+    ].filter(x => x.lim > 0);
+    $('limitsBox').innerHTML = limRows.map(r => {
+      const pct = Math.round((r.sp / r.lim) * 100);
+      const col = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--amb)' : 'var(--pri)';
+      const badge = pct >= 100 ? `<span class="tag t-due" style="background:var(--red-s);color:var(--red);">${t('overLim')}</span>`
+                  : pct >= 80 ? `<span class="tag t-due">${t('warnLim')}</span>` : '';
+      return `<div class="lim-row"><div class="lim-top"><span>${r.lbl}${badge}</span><b>${fmt(r.sp)} / ${fmt(r.lim)}</b></div><div class="prog-bg"><div class="prog-fill" style="width:${Math.min(100,pct)}%;background:${col};"></div></div></div>`;
+    }).join('');
+
+    // Personal 2: Savings (Vault icon)
+    let sd=0, ss=0;
+    $('sList').innerHTML = data.savings.length ? data.savings.map(i => {
+      const dep = i.type==='deposit'; dep ? sd+=i.amount : ss+=i.amount;
+      return `<div class="item"><div class="item-l"><span class="it-ic ${dep?'bg-g':'bg-r'}">${svg(dep?'vault':'arrowUp','sm')}</span><div><h4>${i.note}</h4><small>${i.date}</small></div></div><div class="item-r"><b class="${dep?'g':'r'}">${dep?'+':'-'}${fmt(i.amount)}</b><button class="mini del" onclick="delSav(${i.id})">${svg('trash','sm')}</button></div></div>`;
+    }).join('') : emptyHtml();
+    $('sDep').innerText=fmt(sd); $('sSpd').innerText=fmt(ss); $('sRem').innerText=fmt(sd-ss);
+
+    // Personal 3: Bazar (Filtered by Daily / Weekly / Monthly)
+    let mAll=0, mFilteredTot=0;
+    data.bazar.forEach(i => mAll += i.amount);
+    const filteredBazar = data.bazar.filter(i => inPeriod(i.date, mktFilter));
+    $('mList').innerHTML = filteredBazar.length ? filteredBazar.map(i => {
+      mFilteredTot += i.amount;
+      const dedBadge = i.deductSalary ? `<span class="tag t-due">${t('mDedTag')}</span>` : '';
+      return `<div class="item"><div class="item-l"><span class="it-ic bg-b">${svg('bag','sm')}</span><div><h4>${i.item}${i.qty?`<span class="tag t-cash">${i.qty}</span>`:''}${dedBadge}</h4><small>${i.date}</small></div></div><div class="item-r"><b class="b">${fmt(i.amount)}</b><button class="mini del" onclick="delMkt(${i.id})">${svg('trash','sm')}</button></div></div>`;
+    }).join('') : emptyHtml();
+    $('mTot').innerText=fmt(mFilteredTot); $('mCnt').innerText=filteredBazar.length; $('mToday').innerText=fmt(mAll);
+
+    // Personal 5: Events
+    renderEv();
+
+    // Business 1: Daily Ledger
+    const bId = data.activeBizId;
+    let bdi=0, bdo=0;
+    const bdList = data.bizDaily.filter(x=>x.bizId===bId);
+    $('bdList').innerHTML = bdList.length ? bdList.map(i => {
+      const inc = i.type==='income'; inc ? bdi+=i.amount : bdo+=i.amount;
+      return `<div class="item"><div class="item-l"><span class="it-ic ${inc?'bg-g':'bg-r'}">${svg(inc?'arrowDown':'arrowUp','sm')}</span><div><h4>${i.note}</h4><small>${i.date}</small></div></div><div class="item-r"><b class="${inc?'g':'r'}">${inc?'+':'-'}${fmt(i.amount)}</b><button class="mini del" onclick="delBizDaily(${i.id})">${svg('trash','sm')}</button></div></div>`;
+    }).join('') : emptyHtml();
+    $('bdIn').innerText=fmt(bdi); $('bdOut').innerText=fmt(bdo); $('bdNet').innerText=fmt(bdi-bdo);
+
+    // Business 2: Due Ledger
+    let dRec=0, dPay=0;
+    const duList = data.bizDues.filter(x=>x.bizId===bId);
+    $('duList').innerHTML = duList.length ? duList.map(i => {
+      const isRec = i.type==='receivable';
+      if(!i.settled){ isRec ? dRec+=i.amount : dPay+=i.amount; }
+      return `<div class="item"><div class="item-l"><span class="it-ic ${isRec?'bg-g':'bg-r'}">${svg('swap','sm')}</span><div><h4>${i.party}<span class="tag ${i.settled?'t-cash':'t-due'}">${i.settled?t('settled'):(isRec?t('rec'):t('pay'))}</span></h4><small>${i.date}</small></div></div><div class="item-r">${!i.settled?`<button class="mini pay" onclick="settleDue(${i.id})">${t('settle')}</button>`:''}<b class="${isRec?'g':'r'}">${fmt(i.amount)}</b><button class="mini del" onclick="delBizDue(${i.id})">${svg('trash','sm')}</button></div></div>`;
+    }).join('') : emptyHtml();
+    $('duRec').innerText=fmt(dRec); $('duPay').innerText=fmt(dPay); $('duNet').innerText=fmt(dRec-dPay);
+
+    // Business 3: Vault Savings
+    let bsi=0, bso=0;
+    const bsList = data.bizSavings.filter(x=>x.bizId===bId);
+    $('bsList').innerHTML = bsList.length ? bsList.map(i => {
+      const dep = i.type === 'deposit'; dep ? bsi += i.amount : bso += i.amount;
+      return `<div class="item"><div class="item-l"><span class="it-ic ${dep?'bg-g':'bg-r'}">${svg(dep?'safe':'arrowUp','sm')}</span><div><h4>${i.note}</h4><small>${i.date}</small></div></div><div class="item-r"><b class="${dep?'g':'r'}">${dep?'+':'-'}${fmt(i.amount)}</b><button class="mini del" onclick="delBizSav(${i.id})">${svg('trash','sm')}</button></div></div>`;
+    }).join('') : emptyHtml();
+    $('bsIn').innerText = fmt(bsi); $('bsOut').innerText = fmt(bso); $('bsRem').innerText = fmt(bsi - bso);
+
+    // Business 4: Staff Roster & Payroll (জমা, খরচ, অগ্রিম, নিট পাওনা)
+    const emps = data.employees.filter(e => e.bizId===bId);
+    $('stEmpSel').innerHTML = emps.length
+      ? emps.map(e => `<option value="${e.id}">${e.name}</option>`).join('')
+      : `<option value="">-- ${t('addEmp')} --</option>`;
+
+    const stList = data.bizStaff.filter(x=>x.bizId===bId);
+    $('empList').innerHTML = emps.length ? emps.map(e => {
+      const cycLbl = e.cycle==='daily' ? t('payDaily') : e.cycle==='weekly' ? t('payWeekly') : t('payMonthly');
+      const st = empStats(stList.filter(x => x.empId===e.id));
+      return `<div class="emp-card" onclick="openEmpDetail('${e.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:9px;">
+            <span class="it-ic bg-b">${svg('user','sm')}</span>
+            <div><b style="font-size:.84rem;">${e.name}</b><small style="display:block;color:var(--mut);">${cycLbl} • ${fmt(e.rate)}</small></div>
+          </div>
+          <div style="text-align:right;">
+            <b class="${st.net<0?'r':'b'}" style="font-size:.84rem;">${fmt(st.net)}</b>
+            <small style="display:block;color:var(--mut);font-size:.65rem;">${t('stNetDue')}</small>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding-top:6px;border-top:1px solid var(--bdr);font-size:.69rem;text-align:center;">
+          <div><span style="color:var(--mut);">${t('stCrTot')}:</span> <b class="g">${fmt(st.cr)}</b></div>
+          <div><span style="color:var(--mut);">${t('stPdTot')}:</span> <b class="r">${fmt(st.pd)}</b></div>
+          <div><span style="color:var(--mut);">${t('stAdvTot')}:</span> <b class="a">${fmt(st.adv)}</b></div>
+        </div>
+      </div>`;
+    }).join('') : emptyHtml();
+
+    const totStaff = empStats(stList);
+    $('stList').innerHTML = stList.length ? stList.map(i => {
+      const isCr = i.type==='credit', isAdv = i.type==='advance';
+      const lbl = isCr ? t('optStCr') : isAdv ? t('optStAdv') : t('optStPd');
+      return `<div class="item"><div class="item-l"><span class="it-ic ${isCr?'bg-g':isAdv?'bg-a':'bg-r'}">${svg(isCr?'arrowDown':isAdv?'swap':'arrowUp','sm')}</span><div><h4>${i.name}<span class="tag ${isCr?'t-cash':'t-due'}">${lbl}</span></h4><small>${i.date}${i.note?' • '+i.note:''}</small></div></div><div class="item-r"><b class="${isCr?'g':isAdv?'a':'r'}">${isCr?'+':'-'}${fmt(i.amount)}</b><button class="mini del" onclick="delBizStaff(${i.id})">${svg('trash','sm')}</button></div></div>`;
+    }).join('') : emptyHtml();
+    $('stCr').innerText=fmt(totStaff.cr); $('stPd').innerText=fmt(totStaff.pd);
+    $('stAdv').innerText=fmt(totStaff.adv); $('stNet').innerText=fmt(totStaff.net);
+    $('stNet').className = totStaff.net < 0 ? 'r' : 'b';
+    if (selectedEmpId) renderEmpDetail();
+
+    // Profile & Header Avatar
+    const pName = user?.displayName || data.profile?.name || (lang==='bn'?'গেস্ট ব্যবহারকারী':'Guest User');
+    $('profName').innerText = pName;
+    $('profEmail').innerText = user ? user.email : t('offline');
+    const pic = data.profile?.photo || user?.photoURL;
+    if (pic) {
+      $('profImg').src=pic; $('profImg').style.display='block'; $('profInit').style.display='none';
+      $('hdrImg').src=pic; $('hdrImg').style.display='block'; $('hdrUserIc').style.display='none';
+    } else {
+      $('profImg').style.display='none'; $('profInit').style.display='block';
+      $('hdrImg').style.display='none'; $('hdrUserIc').style.display='block';
+    }
+
+    const authBtn = $('authActionBtn');
+    if (user) { authBtn.innerHTML = `${svg('arrowLeft','sm')}<span>${t('logout')}</span>`; authBtn.style.color='var(--red)'; authBtn.onclick=googleLogout; }
+    else { authBtn.innerHTML = `${svg('shield','sm')}<span>${t('gLoginShort')}</span>`; authBtn.style.color='var(--pri)'; authBtn.onclick=googleLogin; }
+
+    // Account Switcher List
+    $('accList').innerHTML = `
+      <div class="acc-item ${data.mode==='personal'?'active':''}" onclick="switchPersonal()">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <span class="it-ic bg-b">${svg('user','sm')}</span>
+          <div><b style="font-size:.82rem;">${t('personalAcc')}</b><small style="display:block;color:var(--mut);">${t('pDaily')} • ${t('pSav')} • ${t('pMkt')}</small></div>
+        </div>
+        ${data.mode==='personal'?'<span class="tag t-cash">Active</span>':''}
+      </div>
+    ` + data.bizAccounts.map(b => {
+      const act = data.mode==='business' && b.id===data.activeBizId;
+      return `<div class="acc-item ${act?'active':''}" onclick="switchBizAcc('${b.id}')">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <span class="it-ic bg-a">${svg('briefcase','sm')}</span>
+          <div><b style="font-size:.82rem;">${b.name}</b><small style="display:block;color:var(--mut);">${t('bDaily')} • ${t('bDue')} • ${t('bStaff')}</small></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          ${act?'<span class="tag t-cash">Active</span>':''}
+          ${data.bizAccounts.length>1?`<button class="mini del" onclick="delBizAcc(event,'${b.id}')">${svg('trash','sm')}</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+
+    renderAllCharts();
+  }
+
+  // Backup Export / Import
+  window.exportJson = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+    a.download = `amar-hisab-${today}.json`; a.click();
+  };
+  window.importJson = e => {
+    const f=e.target.files[0]; if(!f)return;
+    const r=new FileReader();
+    r.onload=ev=>{ try{ const p=JSON.parse(ev.target.result); if(p && typeof p==='object'){ data={...defData(),...p}; save(); toast('Backup Restored'); } }catch{} };
+    r.readAsText(f); e.target.value='';
+  };
+
+  hydrateIcons();
+  setTheme(theme);
+  setLang(lang);
+  go(curTab);
+</script>
+</body>
+</html>
