@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#2563eb" />
+  <meta name="theme-color" content="#16a34a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link id="pwaManifest" rel="manifest" />
   <title>আমার হিসাব | My Hisab</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <style>
@@ -529,6 +532,11 @@
 
     <!-- Footer Credits -->
     <div class="credits">
+      <div style="display:flex;justify-content:center;gap:8px;margin-bottom:8px;">
+        <button class="mini" onclick="openAboutModal()"><i data-ic="shield" data-sz="sm"></i><span data-i18n="aboutBtn">অ্যাপ সম্পর্কে</span></button>
+        <button class="mini" onclick="openTermsModal()"><i data-ic="briefcase" data-sz="sm"></i><span data-i18n="termsBtn">শর্তাবলি ও গোপনীয়তা নীতি</span></button>
+      </div>
+      <div><strong>আমার হিসাব | My Hisab (v1.0.0)</strong></div>
       <div><strong>Developer: Foysal Ahmed</strong></div>
       <div>Contact: foyaalahamed121@gmail.com</div>
     </div>
@@ -649,7 +657,8 @@
       cancel:"বাতিল", confirm:"নিশ্চিত", offline:"অফলাইন (গেস্ট)", synced:"ক্লাউড সিঙ্ক সক্রিয়", syncing:"সিঙ্ক হচ্ছে...", noData:"কোনো হিসাব পাওয়া যায়নি",
       quickEntry:"নতুন হিসাব লিখুন", addEvTab:"অনুষ্ঠান ট্যাব যোগ করুন", remEvTab:"অনুষ্ঠান ট্যাব লুকান",
       newBizTitle:"নতুন ব্যবসায়িক অ্যাকাউন্টের নাম", newEvTitle:"নতুন অনুষ্ঠানের নাম", editNameTitle:"আপনার নাম লিখুন",
-      salDlgTitle:"বেতন / মূল আয় যোগ করুন", limDlgTitle:"খরচের লিমিট সেট করুন (৳)", empDlgTitle:"নতুন কর্মচারী যোগ করুন"
+      salDlgTitle:"বেতন / মূল আয় যোগ করুন", limDlgTitle:"খরচের লিমিট সেট করুন (৳)", empDlgTitle:"নতুন কর্মচারী যোগ করুন",
+      aboutBtn:"অ্যাপ সম্পর্কে", termsBtn:"শর্তাবলি ও গোপনীয়তা নীতি", dlIconBtn:"অ্যাপ আইকন ডাউনলোড (512x512 PNG)", closeBtn:"বন্ধ করুন"
     },
     en: {
       appTitle:"My Hisab", wSub:"Simple offline & cloud personal and business ledger",
@@ -687,7 +696,8 @@
       cancel:"Cancel", confirm:"Confirm", offline:"Offline (Guest)", synced:"Cloud Synced", syncing:"Syncing...", noData:"No entries yet",
       quickEntry:"Quick Entry", addEvTab:"Show Events Tab", remEvTab:"Hide Events Tab",
       newBizTitle:"New Business Account Name", newEvTitle:"New Event Name", editNameTitle:"Enter Your Name",
-      salDlgTitle:"Add Salary / Main Income", limDlgTitle:"Set Spending Limits (৳)", empDlgTitle:"Add New Employee"
+      salDlgTitle:"Add Salary / Main Income", limDlgTitle:"Set Spending Limits (৳)", empDlgTitle:"Add New Employee",
+      aboutBtn:"About", termsBtn:"Terms & Privacy", dlIconBtn:"Download App Icon (512x512 PNG)", closeBtn:"Close"
     }
   };
 
@@ -1629,6 +1639,177 @@
     r.onload=ev=>{ try{ const p=JSON.parse(ev.target.result); if(p && typeof p==='object'){ data={...defData(),...p}; save(); toast('Backup Restored'); } }catch{} };
     r.readAsText(f); e.target.value='';
   };
+
+  // Offscreen Canvas App Icon Generator (512x512 & 192x192 PNG)
+  function buildAppIconDataUrl(size = 512) {
+    const c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    const r = size * 0.22;
+
+    // Emerald-green rounded square background
+    const grad = ctx.createLinearGradient(0, 0, size, size);
+    grad.addColorStop(0, '#16a34a');
+    grad.addColorStop(1, '#15803d');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(r, 0);
+    ctx.lineTo(size - r, 0);
+    ctx.quadraticCurveTo(size, 0, size, r);
+    ctx.lineTo(size, size - r);
+    ctx.quadraticCurveTo(size, size, size - r, size);
+    ctx.lineTo(r, size);
+    ctx.quadraticCurveTo(0, size, 0, size - r);
+    ctx.lineTo(0, r);
+    ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    // Crisp White Wallet / Ledger Outline
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = size * 0.045;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    const wx = size * 0.2, wy = size * 0.24, ww = size * 0.6, wh = size * 0.52, wr = size * 0.07;
+    ctx.beginPath();
+    ctx.roundRect(wx, wy, ww, wh, wr);
+    ctx.stroke();
+
+    // Ledger spine / top flap accent
+    ctx.beginPath();
+    ctx.moveTo(wx + size * 0.12, wy);
+    ctx.lineTo(wx + size * 0.12, wy + wh);
+    ctx.stroke();
+
+    // Taka (৳) Symbol inside the ledger
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${Math.round(size * 0.28)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('৳', size * 0.56, size * 0.52);
+
+    return c.toDataURL('image/png');
+  }
+
+  window.downloadAppIcon = () => {
+    const a = document.createElement('a');
+    a.href = buildAppIconDataUrl(512);
+    a.download = 'amar-hisab-icon.png';
+    a.click();
+    toast(lang === 'bn' ? 'আইকন ডাউনলোড হয়েছে (amar-hisab-icon.png)' : 'Downloaded amar-hisab-icon.png');
+  };
+
+  function showInfoModal(title, bodyHtml) {
+    $('dlgT').innerText = title;
+    $('dlgBody').innerHTML = bodyHtml;
+    $('dlgYes').style.display = 'none';
+    $('dlgNo').innerText = t('closeBtn');
+    $('dlgNo').onclick = () => {
+      $('dlgYes').style.display = 'inline-flex';
+      $('dlgNo').innerText = t('cancel');
+      $('dlgModal').style.display = 'none';
+    };
+    $('dlgModal').style.display = 'flex';
+  }
+
+  window.openAboutModal = () => {
+    const iconPreview = buildAppIconDataUrl(192);
+    const html = lang === 'bn' ? `
+      <div style="text-align:center;margin-bottom:10px;">
+        <img src="${iconPreview}" alt="App Icon" style="width:68px;height:68px;border-radius:16px;box-shadow:0 6px 16px rgba(22,163,74,.25);" />
+        <div style="font-weight:700;font-size:.95rem;margin-top:6px;">আমার হিসাব | My Hisab</div>
+        <div id="verTapTarget" style="font-size:.74rem;color:var(--mut);user-select:none;cursor:pointer;display:inline-block;padding:2px 8px;">সংস্করণ (Version): v1.0.0</div>
+      </div>
+      <p style="font-size:.79rem;line-height:1.55;color:var(--txt);margin-bottom:10px;">
+        <strong>আমার হিসাব</strong> একটি আধুনিক অফলাইন ও ক্লাউড-সমর্থিত ব্যক্তিগত এবং ব্যবসায়িক হিসাবরক্ষণ অ্যাপ। এতে দৈনন্দিন আয়-ব্যয়, সঞ্চয়, বাজার, ক্যালকুলেটর, অনুষ্ঠান ফান্ড, ব্যবসার দেনা-পাওনা ও কর্মচারী বেতনের পূর্ণাঙ্গ হিসাব সহজে রাখা যায়।
+      </p>
+      <div style="background:var(--bg);border:1px solid var(--bdr);border-radius:10px;padding:9px;font-size:.75rem;margin-bottom:10px;line-height:1.5;">
+        <div><strong>Developer:</strong> Foysal Ahmed</div>
+        <div><strong>Contact:</strong> foyaalahamed121@gmail.com</div>
+      </div>
+      <button id="secretIconDlBtn" class="btn btn-g" style="display:none;" onclick="downloadAppIcon()">${svg('download','sm')}<span>${t('dlIconBtn')}</span></button>
+    ` : `
+      <div style="text-align:center;margin-bottom:10px;">
+        <img src="${iconPreview}" alt="App Icon" style="width:68px;height:68px;border-radius:16px;box-shadow:0 6px 16px rgba(22,163,74,.25);" />
+        <div style="font-weight:700;font-size:.95rem;margin-top:6px;">আমার হিসাব | My Hisab</div>
+        <div id="verTapTarget" style="font-size:.74rem;color:var(--mut);user-select:none;cursor:pointer;display:inline-block;padding:2px 8px;">Version: v1.0.0</div>
+      </div>
+      <p style="font-size:.79rem;line-height:1.55;color:var(--txt);margin-bottom:10px;">
+        <strong>My Hisab (আমার হিসাব)</strong> is a fast, offline-first Personal & Business Accounting PWA designed for daily income/expense tracking, savings goals, bazar budgets, due ledgers, and staff payroll management.
+      </p>
+      <div style="background:var(--bg);border:1px solid var(--bdr);border-radius:10px;padding:9px;font-size:.75rem;margin-bottom:10px;line-height:1.5;">
+        <div><strong>Developer:</strong> Foysal Ahmed</div>
+        <div><strong>Contact:</strong> foyaalahamed121@gmail.com</div>
+      </div>
+      <button id="secretIconDlBtn" class="btn btn-g" style="display:none;" onclick="downloadAppIcon()">${svg('download','sm')}<span>${t('dlIconBtn')}</span></button>
+    `;
+    showInfoModal(t('aboutBtn'), html);
+
+    let taps = 0, tapTimer = null;
+    const target = $('verTapTarget'), btn = $('secretIconDlBtn');
+    if (target && btn) {
+      target.onclick = () => {
+        taps++;
+        clearTimeout(tapTimer);
+        if (taps >= 5) {
+          btn.style.display = 'inline-flex';
+          toast(lang === 'bn' ? 'ডেভেলপার আইকন ডাউনলোড আনলক হয়েছে' : 'Developer icon download unlocked');
+          taps = 0;
+        } else {
+          tapTimer = setTimeout(() => { taps = 0; }, 1500);
+        }
+      };
+    }
+  };
+
+  window.openTermsModal = () => {
+    const html = lang === 'bn' ? `
+      <div style="font-size:.78rem;line-height:1.55;color:var(--txt);max-height:55vh;overflow-y:auto;">
+        <p style="margin-bottom:8px;"><strong>১. ডাটা সংরক্ষণ ও গোপনীয়তা (Data Privacy):</strong><br/>গেস্ট মোডে (Guest Mode) আপনার সকল হিসাব শুধুমাত্র আপনার ডিভাইসের ব্রাউজার স্টোরেজে (LocalStorage) সংরক্ষিত থাকে।</p>
+        <p style="margin-bottom:8px;"><strong>২. ক্লাউড সিঙ্ক ও নিরাপত্তা (Cloud Sync):</strong><br/>ভেরিফাইড ইমেইল বা Google অ্যাকাউন্ট দিয়ে লগইন করলে আপনার হিসাব কেবল আপনার নিজস্ব প্রাইভেট Firebase Firestore পাথে (<code>users/{uid}/backup/data</code>) সুরক্ষিতভাবে সিঙ্ক হয়। তৃতীয় পক্ষের সাথে কোনো ব্যক্তিগত আর্থিক তথ্য শেয়ার করা হয় না।</p>
+        <p style="margin-bottom:8px;"><strong>৩. ব্যাকআপ দায়িত্ব (Backup Policy):</strong><br/>ডিভাইস পরিবর্তন বা ব্রাউজার ডাটা ক্লিয়ার করার আগে নিয়মিত JSON ব্যাকআপ এক্সপোর্ট করে সংরক্ষণ করার পরামর্শ দেওয়া হচ্ছে।</p>
+        <p style="margin-bottom:0;color:var(--mut);"><strong>যোগাযোগ:</strong> Foysal Ahmed (foyaalahamed121@gmail.com)</p>
+      </div>
+    ` : `
+      <div style="font-size:.78rem;line-height:1.55;color:var(--txt);max-height:55vh;overflow-y:auto;">
+        <p style="margin-bottom:8px;"><strong>1. Local Guest Storage:</strong><br/>In Guest Mode, all financial entries remain strictly offline inside your device's local browser storage (LocalStorage) and are never uploaded to any server.</p>
+        <p style="margin-bottom:8px;"><strong>2. Private Cloud Sync:</strong><br/>When signed in with Google or a verified Email account, your backup syncs exclusively to your private Firebase Firestore path (<code>users/{uid}/backup/data</code>). We never sell or share your financial records with third parties.</p>
+        <p style="margin-bottom:8px;"><strong>3. User Responsibility:</strong><br/>Users are encouraged to periodically export local JSON backups before clearing browser data or switching devices.</p>
+        <p style="margin-bottom:0;color:var(--mut);"><strong>Developer Contact:</strong> Foysal Ahmed (foyaalahamed121@gmail.com)</p>
+      </div>
+    `;
+    showInfoModal(t('termsBtn'), html);
+  };
+
+  // Inject PWA Web App Manifest & Register Service Worker (./sw.js)
+  (function initPWA() {
+    try {
+      const icon192 = buildAppIconDataUrl(192);
+      const icon512 = buildAppIconDataUrl(512);
+      const manifest = {
+        name: "আমার হিসাব | My Hisab",
+        short_name: "আমার হিসাব",
+        description: "Personal & Business Offline & Cloud Accounting App",
+        start_url: "./",
+        scope: "./",
+        display: "standalone",
+        orientation: "portrait",
+        theme_color: "#16a34a",
+        background_color: "#f4f6fa",
+        icons: [
+          { src: icon192, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+          { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+      const link = $('pwaManifest');
+      if (link) link.href = URL.createObjectURL(blob);
+
+      if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      }
+    } catch {}
+  })();
 
   hydrateIcons();
   setTheme(theme);
