@@ -154,7 +154,10 @@
     <div id="wErr" class="auth-err"></div>
     <div class="fg" style="text-align:left;"><input type="email" id="wEmail" data-i18n-ph="phEmail" placeholder="ইমেইল ঠিকানা (Email)" /></div>
     <div class="fg" style="text-align:left;margin-bottom:4px;"><input type="password" id="wPass" data-i18n-ph="phPass" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" /></div>
-    <div style="text-align:right;margin-bottom:10px;"><button class="w-link" onclick="resetPass('wEmail','wErr')" data-i18n="forgotPass">পাসওয়ার্ড ভুলে গেছেন?</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <button class="w-link" id="wResendBtn" style="display:none;color:var(--amb);" onclick="resendVerify('wEmail','wPass','wErr')" data-i18n="resendVerify">পুনরায় ভেরিফিকেশন লিংক পাঠান</button>
+      <button class="w-link" style="margin-left:auto;" onclick="resetPass('wEmail','wErr')" data-i18n="forgotPass">পাসওয়ার্ড ভুলে গেছেন?</button>
+    </div>
     <div class="row2" style="margin-bottom:0;">
       <button class="w-btn w-g" onclick="emailAuth('login','wEmail','wPass','wErr')" data-i18n="emailLogin">লগইন করুন</button>
       <button class="w-btn w-gst" onclick="emailAuth('signup','wEmail','wPass','wErr')" data-i18n="emailSignup">নতুন অ্যাকাউন্ট</button>
@@ -555,7 +558,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -615,6 +618,9 @@
       loginG:"Google দিয়ে লগইন করুন", guestBtn:"গেস্ট মোডে চালান",
       phEmail:"ইমেইল ঠিকানা (Email)", phPass:"পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)", forgotPass:"পাসওয়ার্ড ভুলে গেছেন?",
       emailLogin:"লগইন করুন", emailSignup:"নতুন অ্যাকাউন্ট", orTxt:"অথবা",
+      verifySent:"আপনার ইমেইলে একটি ভেরিফিকেশন লিংক পাঠানো হয়েছে (Spam ফোল্ডারও চেক করুন)। লিংকে ক্লিক করে ভেরিফাই করার পর লগইন করুন।",
+      verifyReq:"আপনার ইমেইল এখনো ভেরিফাই করা হয়নি। ইনবক্স বা Spam ফোল্ডার চেক করে ভেরিফাই করুন।",
+      resendVerify:"পুনরায় ভেরিফিকেশন লিংক পাঠান", verifyTitle:"ইমেইল ভেরিফিকেশন প্রয়োজন",
       resetSent:"পাসওয়ার্ড রিসেট লিংক ইমেইলে পাঠানো হয়েছে", enterEmail:"সঠিক ইমেইল ঠিকানা লিখুন",
       errInvalidEmail:"ইমেইল ঠিকানাটি সঠিক নয়", errWrongPass:"ইমেইল বা পাসওয়ার্ড ভুল হয়েছে",
       errEmailUsed:"এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে", errWeakPass:"পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে",
@@ -650,6 +656,9 @@
       loginG:"Sign in with Google", guestBtn:"Continue as Guest",
       phEmail:"Email Address", phPass:"Password (min 6 characters)", forgotPass:"Forgot Password?",
       emailLogin:"Sign In", emailSignup:"Create Account", orTxt:"OR",
+      verifySent:"A verification link has been sent to your email (please check Spam folder too). Verify your email and then sign in.",
+      verifyReq:"Your email is not verified yet. Please check your Inbox or Spam folder and verify before signing in.",
+      resendVerify:"Resend Verification Email", verifyTitle:"Email Verification Required",
       resetSent:"Password reset link sent to your email", enterEmail:"Please enter a valid email address",
       errInvalidEmail:"Invalid email address format", errWrongPass:"Incorrect email or password",
       errEmailUsed:"This email is already registered", errWeakPass:"Password must be at least 6 characters",
@@ -756,7 +765,7 @@
   // Sync & Save
   function setSync(k, ok) { $('syncBadgeText').innerText = t(k); $('sDot').className = 'sync-dot' + (ok?' ok':''); }
   async function save() {
-    if (user && db) {
+    if (user && user.emailVerified && db) {
       localStorage.setItem(K.cloud, JSON.stringify(data));
       if (navigator.onLine) {
         try { setSync('syncing',false); await setDoc(doc(db,'users',user.uid,'backup','data'), { ...data, updatedAt:Date.now() }); setSync('synced',true); }
@@ -767,8 +776,33 @@
     }
     renderAll();
   }
-  window.addEventListener('online', () => { if(user) save(); });
+  window.addEventListener('online', () => { if(user && user.emailVerified) save(); });
   window.addEventListener('offline', () => setSync('offline',false));
+
+  function showVerifyNotice(msg, emVal = '', pwVal = '') {
+    $('dlgT').innerText = t('verifyTitle');
+    $('dlgBody').innerHTML = `
+      <p style="font-size:.82rem;line-height:1.5;color:var(--txt);margin-bottom:10px;">${msg}</p>
+      ${emVal ? `<div style="font-size:.75rem;color:var(--mut);margin-bottom:8px;">${emVal}</div>` : ''}
+      <button class="btn btn-a" id="dlgResendBtn">${svg('shield','sm')}<span>${t('resendVerify')}</span></button>`;
+    $('dlgYes').style.display = 'none';
+    $('dlgNo').innerText = t('confirm');
+    $('dlgNo').onclick = () => {
+      $('dlgYes').style.display = 'inline-flex';
+      $('dlgNo').innerText = t('cancel');
+      $('dlgModal').style.display = 'none';
+    };
+    $('dlgResendBtn').onclick = async () => {
+      if (!auth || !emVal || !pwVal) return toast(t('enterEmail'));
+      try {
+        const cred = await signInWithEmailAndPassword(auth, emVal, pwVal);
+        await sendEmailVerification(cred.user);
+        await signOut(auth);
+        toast(t('verifySent'));
+      } catch (e) { toast(authErrMsg(e.code)); }
+    };
+    $('dlgModal').style.display = 'flex';
+  }
 
   // Firebase Auth
   if (firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('YOUR_')) {
@@ -776,8 +810,14 @@
       const app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
       getRedirectResult(auth).catch(()=>{});
       onAuthStateChanged(auth, async u => {
+        if (u && !u.emailVerified) {
+          user = null;
+          await signOut(auth);
+          if (!localStorage.getItem(K.sess)) $('welcome').style.display = 'flex';
+          return;
+        }
         user = u;
-        if (u) {
+        if (u && u.emailVerified) {
           localStorage.setItem(K.sess, 'cloud'); $('welcome').style.display = 'none';
           const gst = JSON.parse(localStorage.getItem(K.guest));
           const hasG = gst && ((gst.daily?.length||0)+(gst.savings?.length||0)+(gst.bazar?.length||0)+(gst.bizDaily?.length||0) > 0);
@@ -804,22 +844,52 @@
     if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') return t('errWrongPass');
     return code || 'Authentication Error';
   }
-  function showAuthErr(errId, msg) {
+  function showAuthErr(errId, msg, showResend = false) {
     const el = $(errId);
     if (el) { el.innerText = msg; el.style.display = msg ? 'block' : 'none'; }
     else if (msg) toast(msg);
+    const rb = errId === 'wErr' ? $('wResendBtn') : $('mResendBtn');
+    if (rb) rb.style.display = showResend ? 'inline-block' : 'none';
   }
 
   window.emailAuth = async (mode, emId, pwId, errId) => {
     if (!auth) return toast(lang==='bn'?'Firebase Config যুক্ত করুন':'Add Firebase Config');
     const em = $(emId).value.trim(), pw = $(pwId).value;
-    showAuthErr(errId, '');
+    showAuthErr(errId, '', false);
     if (!em || !em.includes('@')) return showAuthErr(errId, t('errInvalidEmail'));
     if (!pw || pw.length < 6) return showAuthErr(errId, t('errWeakPass'));
     try {
-      if (mode === 'signup') await createUserWithEmailAndPassword(auth, em, pw);
-      else await signInWithEmailAndPassword(auth, em, pw);
+      if (mode === 'signup') {
+        const cred = await createUserWithEmailAndPassword(auth, em, pw);
+        await sendEmailVerification(cred.user);
+        await signOut(auth);
+        showVerifyNotice(t('verifySent'), em, pw);
+        return;
+      }
+      const cred = await signInWithEmailAndPassword(auth, em, pw);
+      if (!cred.user.emailVerified) {
+        await signOut(auth);
+        showAuthErr(errId, t('verifyReq'), true);
+        showVerifyNotice(t('verifyReq'), em, pw);
+        return;
+      }
       $('dlgModal').style.display = 'none';
+    } catch (e) {
+      showAuthErr(errId, authErrMsg(e.code));
+    }
+  };
+
+  window.resendVerify = async (emId, pwId, errId) => {
+    if (!auth) return;
+    const em = $(emId).value.trim(), pw = $(pwId).value;
+    showAuthErr(errId, '', false);
+    if (!em || !em.includes('@')) return showAuthErr(errId, t('enterEmail'));
+    if (!pw || pw.length < 6) return showAuthErr(errId, t('errWeakPass'));
+    try {
+      const cred = await signInWithEmailAndPassword(auth, em, pw);
+      await sendEmailVerification(cred.user);
+      await signOut(auth);
+      toast(t('verifySent'));
     } catch (e) {
       showAuthErr(errId, authErrMsg(e.code));
     }
@@ -828,7 +898,7 @@
   window.resetPass = async (emId, errId) => {
     if (!auth) return;
     const em = $(emId).value.trim();
-    showAuthErr(errId, '');
+    showAuthErr(errId, '', false);
     if (!em || !em.includes('@')) return showAuthErr(errId, t('enterEmail'));
     try {
       await sendPasswordResetEmail(auth, em);
@@ -844,7 +914,10 @@
       <div id="mAuthErr" class="auth-err"></div>
       <div class="fg"><input type="email" id="mEmail" placeholder="${t('phEmail')}" /></div>
       <div class="fg" style="margin-bottom:4px;"><input type="password" id="mPass" placeholder="${t('phPass')}" /></div>
-      <div style="text-align:right;margin-bottom:10px;"><button class="w-link" onclick="resetPass('mEmail','mAuthErr')">${t('forgotPass')}</button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <button class="w-link" id="mResendBtn" style="display:none;color:var(--amb);" onclick="resendVerify('mEmail','mPass','mAuthErr')">${t('resendVerify')}</button>
+        <button class="w-link" style="margin-left:auto;" onclick="resetPass('mEmail','mAuthErr')">${t('forgotPass')}</button>
+      </div>
       <div class="row2">
         <button class="btn" onclick="emailAuth('login','mEmail','mPass','mAuthErr')">${t('emailLogin')}</button>
         <button class="btn btn-sub" onclick="emailAuth('signup','mEmail','mPass','mAuthErr')">${t('emailSignup')}</button>
@@ -852,6 +925,7 @@
       <div class="w-div"><span>${t('orTxt')}</span></div>
       <button class="btn btn-g" onclick="$('dlgModal').style.display='none';googleLogin()">${svg('shield','sm')}<span>${t('loginG')}</span></button>`;
     $('dlgYes').style.display = 'none';
+    $('dlgNo').innerText = t('cancel');
     $('dlgNo').onclick = () => { $('dlgYes').style.display = 'inline-flex'; $('dlgModal').style.display = 'none'; };
     $('dlgModal').style.display = 'flex';
   };
