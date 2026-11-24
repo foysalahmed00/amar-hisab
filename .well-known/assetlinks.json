@@ -1,8 +1,12 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "io.github.foysalahmed00.twa",
-        "sha256_cert_fingerprints": ["16:82:86:1C:E0:33:4B:48:67:56:48:1C:87:79:84:17:35:EE:70:42:7D:11:07:D7:34:9F:95:45:36:BD:7B:9C"]
-      }
-    }]
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.mycompany.amarhisacom.foysalahmed.amarhisabb",
+      "sha256_cert_fingerprints": [
+        "79:28:4F:C1:AD:BB:70:A7:E4:78:68:3F:64:13:8B:23:A9:4B:F8:D0:4E:CC:5D:1E:B7:2D:98:00:08:4A:D1:E0"
+      ]
+    }
+  }
+]
